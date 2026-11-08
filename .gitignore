@@ -1,0 +1,4 @@
+.DS_Store
+__pycache__/
+# 手元専用（旧AI訳・連絡文など。公開しない）
+private/

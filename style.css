@@ -1,0 +1,132 @@
+:root {
+  --bg: #f7f4ee;
+  --surface: #fffdf8;
+  --text: #2a2622;
+  --muted: #7a7168;
+  --line: #e2dbcf;
+  --accent: #8a3b2e;
+  --mark: #f3e2a6;
+  --shite: #8a3b2e;
+  --waki: #2f5d7c;
+  --tsure: #6b4f8a;
+  --ji: #4d6b3c;
+  --kokata: #a0662a;
+  --ai: #5f5f5f;
+  --dougin: #7c4a5e;
+  --other: #3f6e6a;
+  --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+  --sans: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1916;
+    --surface: #24211d;
+    --text: #e9e3d8;
+    --muted: #a39a8e;
+    --line: #3a352f;
+    --accent: #e08f7a;
+    --mark: #5a4a1c;
+    --shite: #e08f7a;
+    --waki: #85b4d6;
+    --tsure: #b9a0dc;
+    --ji: #9fc08a;
+    --kokata: #e0aa6e;
+    --ai: #b0b0b0;
+    --dougin: #d595b0;
+    --other: #8cc5bf;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.7;
+}
+a { color: var(--accent); }
+header.site, main, footer.site { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+header.site { padding-top: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.brand { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; color: var(--text); text-decoration: none; letter-spacing: .1em; }
+footer.site { margin-top: 48px; padding-top: 16px; padding-bottom: 32px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
+footer.site p { margin: .2em 0; }
+
+/* 一覧 */
+.controls { display: grid; gap: 10px; margin: 16px 0; }
+.controls input[type=search] {
+  width: 100%; padding: 10px 12px; font-size: 1rem;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text);
+}
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button, .chip {
+  font: inherit; font-size: .9rem; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.tabs button[aria-pressed=true], .chip[aria-pressed=true] { background: var(--text); color: var(--bg); border-color: var(--text); }
+select { font: inherit; font-size: .9rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+label.check { font-size: .9rem; display: inline-flex; gap: 4px; align-items: center; }
+.count { font-size: .85rem; color: var(--muted); }
+
+ul.list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+ul.list a {
+  display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--text); text-decoration: none; min-width: 0;
+}
+ul.list a:hover { border-color: var(--accent); }
+.kyoku-title { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; }
+.kyoku-meta { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { display: inline-block; font-size: .7rem; padding: 0 6px; border-radius: 4px; background: var(--accent); color: var(--bg); margin-left: 6px; vertical-align: middle; font-family: var(--sans); font-weight: normal; }
+.empty { color: var(--muted); padding: 24px 0; }
+
+/* 詳細 */
+.back { display: inline-block; margin: 16px 0 4px; font-size: .9rem; }
+h1.kyoku { font-family: var(--serif); font-size: 2rem; margin: 4px 0 8px; letter-spacing: .1em; }
+dl.meta { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .9rem; margin: 0 0 12px; }
+dl.meta dt { color: var(--muted); }
+dl.meta dd { margin: 0; }
+.notice { font-size: .85rem; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--surface); margin: 12px 0; }
+.toolbar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+
+section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
+.dan-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.dan-head h2 { font-family: var(--serif); font-size: 1.1rem; margin: 0; }
+.dan-head a { font-size: .8rem; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.cols > *, main { min-width: 0; overflow-wrap: anywhere; }
+.col-label { font-size: .75rem; color: var(--muted); margin-bottom: 4px; letter-spacing: .1em; }
+[data-view=gen] .col-tsu, [data-view=tsu] .col-gen { display: none; }
+[data-view=gen] .cols, [data-view=tsu] .cols { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 720px) {
+  .cols { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  h1.kyoku { font-size: 1.6rem; }
+}
+
+.u { font-family: var(--serif); font-size: 1.05rem; margin: 0 0 .7em; padding-left: 10px; border-left: 3px solid var(--line); }
+.u .sp { font-family: var(--sans); font-size: .75rem; font-weight: 600; margin-right: .5em; }
+.u[data-role=シテ] { border-color: var(--shite); } .u[data-role=シテ] .sp { color: var(--shite); }
+.u[data-role=ワキ] { border-color: var(--waki); } .u[data-role=ワキ] .sp { color: var(--waki); }
+.u[data-role=ワキツレ] { border-color: var(--waki); border-left-style: dashed; } .u[data-role=ワキツレ] .sp { color: var(--waki); }
+.u[data-role=ツレ] { border-color: var(--tsure); } .u[data-role=ツレ] .sp { color: var(--tsure); }
+.u[data-role=地] { border-color: var(--ji); } .u[data-role=地] .sp { color: var(--ji); }
+.u[data-role=子方] { border-color: var(--kokata); } .u[data-role=子方] .sp { color: var(--kokata); }
+.u[data-role=アイ] { border-color: var(--ai); } .u[data-role=アイ] .sp { color: var(--ai); }
+.u[data-role=同吟] { border-color: var(--dougin); } .u[data-role=同吟] .sp { color: var(--dougin); }
+.u[data-role=その他] { border-color: var(--other); } .u[data-role=その他] .sp { color: var(--other); }
+.u.hidden { display: none; }
+
+.t { margin: 0 0 .7em; font-size: 1rem; }
+.t .sp { font-size: .75rem; font-weight: 600; color: var(--accent); margin-right: .5em; }
+.t.note { font-size: .82rem; color: var(--muted); }
+.t.gloss { font-size: .88rem; color: var(--muted); padding-left: 1em; }
+.t.gloss::before { content: "（"; } .t.gloss::after { content: "）"; }
+.t.narration { font-style: normal; }
+.t p { margin: 0; }
+
+mark.issue { background: var(--mark); color: inherit; border-radius: 2px; cursor: help; }
+.issues { font-size: .88rem; margin-top: 24px; }
+.issues h2 { font-size: 1rem; }
+.issues li { margin-bottom: .5em; }
+.loading { color: var(--muted); padding: 24px 0; }
