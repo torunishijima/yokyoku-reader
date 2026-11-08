@@ -35,8 +35,19 @@ for pid in pids:
             im.crop((0, 0, w // 2 + w // 50, h)).save(tmp / f'f{f:04d}L.jpg', quality=92)
             im.crop((w // 2 - w // 50, 0, w, h)).save(tmp / f'f{f:04d}R.jpg', quality=92)
             p.unlink(); time.sleep(0.5)
-        subprocess.run([str(OCR / '.venv/bin/python'), 'ocr.py', '--sourcedir', str(tmp), '--output', str(out)],
-                       cwd=OCR / 'src', check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        def run(args):
+            return subprocess.run([str(OCR / '.venv/bin/python'), 'ocr.py', *args, '--output', str(out)],
+                                  cwd=OCR / 'src', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        r = run(['--sourcedir', str(tmp)])
+        if r.returncode != 0:
+            print('batch failed, retrying:', r.stderr.strip().splitlines()[-1:] , flush=True)
+            r = run(['--sourcedir', str(tmp)])
+        if r.returncode != 0:
+            for img in sorted(tmp.glob('*.jpg')):
+                if (out / (img.stem + '.json')).exists(): continue
+                r1 = run(['--sourceimg', str(img)])
+                if r1.returncode != 0:
+                    print('SKIP', pid, img.name, r1.stderr.strip().splitlines()[-1:], flush=True)
         print(f'{pid}: done through frame {frames[min(i + BATCH, len(frames)) - 1]}', flush=True)
     shutil.rmtree(ROOT / 'work/tmp', ignore_errors=True)
 print('ALL DONE', flush=True)
