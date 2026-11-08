@@ -269,6 +269,7 @@ async function renderKyoku(id) {
           </div>
         </section>`).join("")}
     </div>
+    ${tk.omitted?.length ? `<p class="count">通釈を収録していない箇所：${tk.omitted.map(o => `${esc(o.content)}（${esc(o.pages)}頁）`).join("、")}</p>` : ""}
     ${tk.text_issues?.length ? `<div class="issues"><h2>原文の異同</h2><ul>${tk.text_issues.map(is => `
       <li>半魚文庫「<mark class="issue">${esc(is.hangyo)}</mark>」→ 謡曲大観本文「${esc(is.taikan_honbun)}」（${esc(is.page)}頁）<br><span class="count">${esc(is.note)}</span></li>`).join("")}</ul></div>` : ""}
     <p class="count">原文出典：半魚文庫「謡曲三百五十番集」（${esc(r.file)}）。通釈：${esc(tk.source.book)}（${esc(tk.source.publisher)} ${esc(tk.source.year)}）、<a href="${esc(tk.source.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>。書き起こし：${esc(tk.transcription.by)}、${esc(tk.transcription.date)}。</p>`;

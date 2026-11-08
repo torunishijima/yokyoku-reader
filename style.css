@@ -123,6 +123,7 @@ section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
 .t.gloss { font-size: .88rem; color: var(--muted); padding-left: 1em; }
 .t.gloss::before { content: "（"; } .t.gloss::after { content: "）"; }
 .t.narration { font-style: normal; }
+.t.heading { font-family: var(--serif); font-weight: 600; color: var(--accent); letter-spacing: .3em; }
 .t p { margin: 0; }
 
 mark.issue { background: var(--mark); color: inherit; border-radius: 2px; cursor: help; }
