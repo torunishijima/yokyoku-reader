@@ -20,7 +20,7 @@ for pid in pids:
     frames = [f for f in range(first, last + 1) if not (out / f'f{f:04d}R.json').exists()]
     print(f'{pid}: frames {first}-{last}, todo {len(frames)}', flush=True)
     for i in range(0, len(frames), BATCH):
-        tmp = ROOT / 'work/tmp'; shutil.rmtree(tmp, ignore_errors=True); tmp.mkdir(parents=True)
+        tmp = ROOT / 'work/tmp' / pid; shutil.rmtree(tmp, ignore_errors=True); tmp.mkdir(parents=True)
         for f in frames[i:i + BATCH]:
             url = f'https://dl.ndl.go.jp/api/iiif/{pid}/R{f:07d}/full/full/0/default.jpg'
             for attempt in range(3):
@@ -49,5 +49,5 @@ for pid in pids:
                 if r1.returncode != 0:
                     print('SKIP', pid, img.name, r1.stderr.strip().splitlines()[-1:], flush=True)
         print(f'{pid}: done through frame {frames[min(i + BATCH, len(frames)) - 1]}', flush=True)
-    shutil.rmtree(ROOT / 'work/tmp', ignore_errors=True)
+    shutil.rmtree(ROOT / 'work/tmp' / pid, ignore_errors=True)
 print('ALL DONE', flush=True)
