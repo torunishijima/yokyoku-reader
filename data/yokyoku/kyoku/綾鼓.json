@@ -143,7 +143,7 @@
    ],
    "tsushaku": [
     {
-     "type": "narration",
+     "type": "heading",
      "text": "第一段"
     },
     {
@@ -728,10 +728,6 @@
     {
      "type": "note",
      "text": "身投げした心で退場。"
-    },
-    {
-     "type": "narration",
-     "text": "第二段"
     }
    ]
   },
@@ -839,6 +835,10 @@
     }
    ],
    "tsushaku": [
+    {
+     "type": "heading",
+     "text": "第二段"
+    },
     {
      "type": "note",
      "text": "舞臺は木の丸の皇居。ワキ臣下は狂言の從者から老人が身投げした事を聞き、女御の御前に出て、"

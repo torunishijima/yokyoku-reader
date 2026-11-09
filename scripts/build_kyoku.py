@@ -379,6 +379,9 @@ def extract_ai(pid, start, end, last_page, log):
     return parse_honbun(lines, log, {}, in_ai=True) if lines else []
 
 # ---------- 通釈 ----------
+SCENE = re.compile(r'(?:前段|後段|第[一二三四五]段)')
+def is_scene(t): return bool(SCENE.fullmatch(t))   # 通釈の場面の見出し（夢幻能は前段・後段、劇能は第一段・第二段…）
+
 def parse_tsushaku(lines):
     items, buf, depth = [], None, 0
     def flush():
@@ -386,7 +389,7 @@ def parse_tsushaku(lines):
         if buf:
             t = buf['text']
             m = re.match(r'^([^「『(（\s。、]{1,10})(\([^)）]{1,12}[)）])?[「『](.*)$', t, re.S)
-            if t in ('前段', '後段'): items.append(dict(type='heading', text=t))
+            if is_scene(t): items.append(dict(type='heading', text=t))
             elif re.fullmatch(r'[一二三四五六七八九〇十\d\s\-ー―・.*＊、,]+', t): pass   # 頁番号などのゴミ
             elif m and (re.fullmatch(r'[ぁ-ゖ]+', m[1]) or re.search(r'[-ー―]', m[1])):   # 「と「笠づくし」の…」「英雄--『…」は話し手ではない
                 items.append(dict(type='note' if buf['nsmall'] * 2 > buf['n'] else 'narration', text=t))
@@ -400,19 +403,19 @@ def parse_tsushaku(lines):
         t = l['t']
         if l.get('kind') in ('junk',): continue
         if l.get('kind') == 'heading': flush(); items.append(dict(type='heading', text=t)); continue
-        starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or t in ('前段', '後段')
+        starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or is_scene(t)
         small = l.get('small', False)
         if buf and len(t) <= 5 and not re.search(r'[。」)）]$', buf['text']): small = buf['small']   # 段落末の短い行（「つた。」）は字の大きさを測れないので前の行に合わせる
         if depth and buf and re.match(r'^[^「『(（\s。、,，-]{1,6}「', t) and re.match(r'^[^「『(（\s。、]{1,10}「', buf['text']): depth = 0   # 閉じ括弧の読み落とし: 行頭に次の話し手が来たら台詞を区切る（敦盛の蓮生→草刈）
         if depth and buf and small and not buf['small'] and re.match(r'^[^「『(（\s。、]{1,10}[「『]', buf['text']) and len(t) >= 8 and not re.search(r'[」』()（）…]', t) \
                 and buf['text'].count('(') + buf['text'].count('（') <= buf['text'].count(')') + buf['text'].count('）'): depth = 0   # 台詞の閉じ括弧の読み落とし: 小字の行（説明）に変わったら台詞を区切る
-        if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']) or small != buf['small'])) or t in ('前段', '後段'):
+        if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']) or small != buf['small'])) or is_scene(t):
             flush(); buf = dict(text=t, page=page, small=small, n=0, nsmall=0)
         else:
             buf['text'] += t
         buf['n'] += 1; buf['nsmall'] += small
         depth = max(0, depth + t.count('「') + t.count('(') + t.count('（') - t.count('」') - t.count(')') - t.count('）'))
-        if buf['text'] in ('前段', '後段'): flush()
+        if is_scene(buf['text']): flush()
     flush()
     out = []
     for it in items:
@@ -523,6 +526,11 @@ def build(title):
                     hon.pop(); log.append(dict(page=ai['start'][0], kind='間狂言', ocr='中入の後に散文なし', fixed='間狂言の欄を出さない'))
         dan.append(dict(no=d['no'], label=d['label'], page=d['page'], ai=d['ai'],
                         honbun=hon, tsushaku=parse_tsushaku(t['lines'])))
+    for i, d in enumerate(dan):   # 通釈の場面の見出しが段の末尾に来たら次の段の頭へ。続けて同じ見出しは一つに（藍染川）
+        ts_ = d['tsushaku']
+        d['tsushaku'] = [t for j, t in enumerate(ts_) if not (t['type'] == 'heading' and j and ts_[j - 1] == t)]
+        while i + 1 < len(dan) and d['tsushaku'] and d['tsushaku'][-1]['type'] == 'heading':
+            dan[i + 1]['tsushaku'].insert(0, d['tsushaku'].pop())
     for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い
         h = sum(len(it.get('text', '')) for it in d['honbun'] if it['type'] == 'u')
         t = sum(len(it.get('text', '')) for it in d['tsushaku'])

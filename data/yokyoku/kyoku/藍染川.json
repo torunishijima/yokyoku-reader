@@ -136,8 +136,12 @@
    ],
    "tsushaku": [
     {
+     "type": "heading",
+     "text": "第一段"
+    },
+    {
      "type": "note",
-     "text": "第一段舞臺は初め京で、シテ京女(もとの梅壺侍從)子方のわが子梅千世を伴つて登場。"
+     "text": "舞臺は初め京で、シテ京女(もとの梅壺侍從)子方のわが子梅千世を伴つて登場。"
     },
     {
      "type": "speech",
@@ -1298,8 +1302,8 @@
    ],
    "tsushaku": [
     {
-     "type": "note",
-     "text": "第二段第二段"
+     "type": "heading",
+     "text": "第二段"
     },
     {
      "type": "speech",
