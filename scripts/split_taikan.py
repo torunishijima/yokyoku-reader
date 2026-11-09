@@ -6,6 +6,7 @@
   上端 <0.28 頭注 / 0.28–0.6 本文 / 0.6 以上 通釈。
 - 小さい字（型付・ト書き）は行幅で判定して行頭に「＊」、確信度 0.5 未満は末尾に「〔?〕」。
 出力: work/split/<曲名>.honbun.txt / .tsushaku.txt（ページごとに「# p<頁> <コマ><L|R>」見出し）
+  と、各行の画像上の位置 .honbun.lines.json / .tsushaku.lines.json（見出し行は null。x は行の右端、ページ幅比）
 使い方: split_taikan.py [曲名 ...]"""
 import json, sys, re
 KOI = re.compile(r'^[〔「(（]考\s*異[〕」)）]$')
@@ -46,12 +47,15 @@ def render(rows):
     return [(('＊' if r['w'] < wmax * 0.72 else '') + r['t'] + ('' if r['c'] >= 0.5 else '〔?〕'), r)
             for r in sorted(rows, key=lambda r: -r['x'])]
 
+def pos(pid, f, p, rows):
+    return [dict(page=p, pid=pid, img=f.stem, box=r['box'], x=round(r['x'], 4)) for _, r in rows]
+
 def split(i):
     x = toc[i]; pid = x['pid']
     nxt = toc[i + 1] if i + 1 < len(toc) and toc[i + 1]['pid'] == pid else None
     last = nxt['page'] - 1 if nxt else (x['frame_end'] - base[pid]) * 2 + 1
     started = False
-    hl = []
+    hl, tl = [], []
     hb, ts, stats = [], [], dict(pages=0, text_pages=0, prose_pages=0, missing=[])
     for p in range(x['page'], last + 1):
         f = page_file(pid, p)
@@ -83,15 +87,17 @@ def split(i):
                     if ph:
                         hb += [f'# p{p - 1} {pf.stem[1:]}'] + [l for l, _ in render(ph)]
                         ts += [f'# p{p - 1} {pf.stem[1:]}'] + [l for l, _ in render(pt)]
-                        hl += [None] + [dict(page=p - 1, pid=pid, img=pf.stem, box=r['box']) for _, r in render(ph)]
+                        hl += [None] + pos(pid, pf, p - 1, render(ph))
+                        tl += [None] + pos(pid, pf, p - 1, render(pt))
             k = next((j for j, (l, _) in enumerate(rt) if DAN.match(l)), 0); rt = rt[k:]
         tag = f'# p{p} {f.stem[1:]}'
         hb += [tag] + [l for l, _ in rh]; ts += [tag] + [l for l, _ in rt]
-        hl += [None] + [dict(page=p, pid=pid, img=f.stem, box=r['box']) for _, r in rh]
+        hl += [None] + pos(pid, f, p, rh); tl += [None] + pos(pid, f, p, rt)
         if ko: break
     name = x['title']
     (OUT / f'{name}.honbun.txt').write_text('\n'.join(hb) + '\n', encoding='utf-8')
     (OUT / f'{name}.honbun.lines.json').write_text(json.dumps(hl), encoding='utf-8')
+    (OUT / f'{name}.tsushaku.lines.json').write_text(json.dumps(tl), encoding='utf-8')
     (OUT / f'{name}.tsushaku.txt').write_text('\n'.join(ts) + '\n', encoding='utf-8')
     return name, x['page'], last, stats
 
@@ -122,7 +128,7 @@ def split_bekkan(i):
     x = toc[i]; pid = x['pid']
     nxt = toc[i + 1] if i + 1 < len(toc) and toc[i + 1]['pid'] == pid else None
     last = nxt['page'] if nxt else (x['frame_end'] - base[pid]) * 2 + 1
-    hb, ts, hl, stats = [], [], [], dict(pages=0, text_pages=0, prose_pages=0, missing=[])
+    hb, ts, hl, tl, stats = [], [], [], [], dict(pages=0, text_pages=0, prose_pages=0, missing=[])
     for p in range(x['page'], last + 1):
         f = page_file(pid, p)
         if not f.exists(): stats['missing'].append(p); continue
@@ -146,11 +152,12 @@ def split_bekkan(i):
                 if ks: rh = rh[max(ks) + 1:]
             tag = f'# p{p} {f.stem[1:]}'
             hb += [tag] + [l for l, _ in rh]; ts += [tag] + [l for l, _ in rt]
-            hl += [None] + [dict(page=p, pid=pid, img=f.stem, box=r['box']) for _, r in rh]
+            hl += [None] + pos(pid, f, p, rh); tl += [None] + pos(pid, f, p, rt)
         if stop: break
     name = x['title']
     (OUT / f'{name}.honbun.txt').write_text('\n'.join(hb) + '\n', encoding='utf-8')
     (OUT / f'{name}.honbun.lines.json').write_text(json.dumps(hl), encoding='utf-8')
+    (OUT / f'{name}.tsushaku.lines.json').write_text(json.dumps(tl), encoding='utf-8')
     (OUT / f'{name}.tsushaku.txt').write_text('\n'.join(ts) + '\n', encoding='utf-8')
     return name, x['page'], last, stats
 

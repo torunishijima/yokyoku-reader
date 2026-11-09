@@ -33,10 +33,11 @@ function norm(s) {
   return (s || "").replace(/./g, c => VARIANTS[c] || c);
 }
 
-// 能柄の先頭（脇能・修羅物・鬘物 など）を分類に使う
+// 能柄の先頭（脇能・二番目〜五番目・別曲）を分類に使う
+const GROUPS = ["別曲", "脇能", "初番目", "二番目", "三番目", "四番目", "五番目"];
 function nougaraGroup(s) {
-  const m = (s || "").match(/^(脇能|修羅物|鬘物|雜能|雑能|四番目物|切能|切物|五番目物|祝言)/);
-  return m ? m[1].replace("雜", "雑") : (s ? "その他" : "");
+  const g = GROUPS.find(g => (s || "").startsWith(g));
+  return g || (s ? "その他" : "");
 }
 
 // 色分け用の役（表示は底本の役名のまま）
@@ -62,7 +63,8 @@ function ndlLink(k, page) {
 async function renderList() {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
   const all = await loadIndex();
-  const groups = [...new Set(all.map(r => nougaraGroup(r.nougara)).filter(Boolean))];
+  const groups = [...new Set(all.map(r => nougaraGroup(r.nougara)).filter(Boolean))]
+    .sort((a, b) => GROUPS.indexOf(a) - GROUPS.indexOf(b));
 
   app.innerHTML = `
     <div class="controls">
@@ -122,7 +124,7 @@ function honbunHTML(it, k) {
     return `<p class="ai">間狂言（このサイトには未収録。<a href="${esc(ndlLink(k, a))}" target="_blank" rel="noopener">原本 ${a}${b !== a ? "–" + b : ""}頁 ↗</a>）</p>`;
   }
   const label = [it.role, it.shodan].filter(Boolean).join(" ");
-  return `<p class="u" data-role="${esc(roleKey(it.role))}">${label ? `<span class="sp">${esc(label)}</span>` : ""}${it.paren ? `<span class="dir">${esc(it.paren)}</span>` : ""}${dirs(it.text)}</p>`;
+  return `<p class="u" data-role="${esc(roleKey(it.role || it.role_cont))}">${label ? `<span class="sp">${esc(label)}</span>` : ""}${it.paren ? `<span class="dir">${esc(it.paren)}</span>` : ""}${dirs(it.text)}</p>`;
 }
 
 function tsuHTML(it) {
@@ -172,7 +174,7 @@ async function renderKyoku(title) {
           <div class="dan-head"><h2>【${esc(d.label)}】</h2><a href="${esc(ndlLink(k, d.page))}" target="_blank" rel="noopener">原本 ${d.page}頁 ↗</a></div>
           <div class="cols">
             <div class="col-gen"><div class="col-label">本文</div>${d.honbun.map(it => honbunHTML(it, k)).join("")}</div>
-            <div class="col-tsu"><div class="col-label">通釈</div>${d.tsushaku.map(tsuHTML).join("")}</div>
+            <div class="col-tsu"><div class="col-label">通釈</div>${d.tsushaku.length ? d.tsushaku.map(tsuHTML).join("") : d.ai ? "" : `<p class="note">（大観に通釈なし）</p>`}</div>
           </div>
         </section>`).join("")}
     </div>

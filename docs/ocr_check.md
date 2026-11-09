@@ -11,7 +11,7 @@
 - 目次 `data/yokyoku/taikan_toc.json` は本巻 236 曲＋別巻 46 編。本巻と同名の別巻 6 編は「（別巻）」付きの title。合浦は半魚文庫の「合甫」（yo251）に対応。
 - 曲ごとに切り出し済み（`work/split/<曲>.honbun.txt` / `.tsushaku.txt` / `.honbun.lines.json`）。
 - 半魚文庫との照合済み（`work/collate/<曲>.json`、274 曲）。要確認は全体で約 7,700 か所。半魚文庫 352 曲のうち通釈が付くのは 274 曲、付かないのは 78 曲。
-- 確認済み 15 曲: 清経・羽衣・敦盛・井筒・道成寺／高砂・松風・隅田川・安宅・船辨慶・葵上・翁・鸚鵡小町・阿漕・蘆刈。要確認 577 か所中、記録 39 件。
+- 確認済み 15 曲: 清経・羽衣・敦盛・井筒・道成寺／高砂・松風・隅田川・安宅・船辨慶・葵上・翁・鸚鵡小町・阿漕・蘆刈。本文の要確認 577 か所と役名の要確認を見て、記録は計 132 件。サイトに公開済み。
 - `work/` は .gitignore 対象（手元にだけある）。
 
 進み具合と次の曲: `python3 scripts/check_status.py`
@@ -29,6 +29,15 @@
    p846	時烏	時鳥	画像で確認
    ```
    字が小さく判別できないものは、備考に「要再確認（高解像度）」と書く。
+4. サイト用データを作る: `python3 scripts/build_kyoku.py <曲名>`
+   - 「段の番号が飛んでいる」「訂正を当てられなかった」と出たら原因を見る。段の印が OCR でどの段にも出ていないときは、原本で位置を確かめて訂正記録で補う（例: `p160	ッレ『東屋の	【三】ツレ『東屋の	段の印の読み落とし`）。
+5. 役名を照合する: `~/tools/textvenv/bin/python scripts/role_check.py <曲名>`
+   → `work/checks/<曲>/roleNN.jpg` と `roles.txt`。半魚文庫と役名が食い違うもの・読めないもの・行の途中に崩れた役名が残るものが出る。
+   - 原本の小字の役名（小段名の上に並ぶ「シテ／ツレ」など）は「シテ・ツレ」と書く。
+   - 原本どおりで直さないものも、備考を「役名確認：…」として記録する（照合で再び出ないように）。
+   - 本文の位置にあるがト書きの行は、備考を「ト書き：…」で始めるとト書きとして扱う。
+   - 要確認が 0 になるまで 4・5 をくり返す。
+6. 一覧を作り直す: `python3 scripts/build_index.py`
 
 ## 判定の注意
 
@@ -46,6 +55,9 @@
 | `scripts/split_taikan.py` | 曲ごと・段ごとの切り出し（頁→コマは巻ごとに一定。目次のコマ番号は使わない） |
 | `scripts/collate.py` | 半魚文庫と読み（ひらがな）で照合し、差分を仕分け（check/okuri/ortho/repeat/stage/role/block） |
 | `scripts/make_checks.py` | 要確認（check）の箇所を画像から切り出してシートにする |
+| `scripts/build_kyoku.py` | 訂正を当てて、サイト用の曲データ（`data/yokyoku/kyoku/`）を作る |
+| `scripts/role_check.py` | 役名を半魚文庫と照合し、要確認の箇所をシートにする |
+| `scripts/build_index.py` | 一覧データを作る |
 | `scripts/check_status.py` | 進み具合 |
 
 `collate.py` と `make_checks.py` は `~/tools/textvenv/bin/python`（pykakasi・Pillow 入り）で動かす。
