@@ -137,7 +137,9 @@ section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
 
 /* 本文のト書き */
 .col-gen .note { font-size: .82rem; color: var(--muted); margin: 0 0 .7em; padding-left: 13px; }
-.col-gen .ai { font-size: .85rem; color: var(--muted); margin: 0 0 .7em; padding: 6px 10px; border: 1px dashed var(--line); border-radius: 6px; }
+.col-gen .ai { margin: 0 0 .7em; padding: 8px 10px 2px; border: 1px dashed var(--line); border-radius: 6px; }
+.ai-head { font-size: .8rem; color: var(--muted); margin: 0 0 .7em; }
+.ai-head span { font-weight: 600; color: var(--ai); margin-right: .6em; }
 .u .dir { font-family: var(--sans); font-size: .75rem; color: var(--muted); margin: 0 .15em; }
 .loading { color: var(--muted); padding: 24px 0; }
 

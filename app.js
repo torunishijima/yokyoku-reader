@@ -123,7 +123,9 @@ function honbunHTML(it, k) {
   if (it.type === "heading") return `<p class="note">${esc(it.text)}</p>`;
   if (it.type === "ai") {
     const [a, b] = it.pages;
-    return `<p class="ai">間狂言（このサイトには未収録。<a href="${esc(ndlLink(k, a))}" target="_blank" rel="noopener">原本 ${a}${b !== a ? "–" + b : ""}頁 ↗</a>）</p>`;
+    const link = `<a href="${esc(ndlLink(k, a))}" target="_blank" rel="noopener">原本 ${a}${b !== a ? "–" + b : ""}頁 ↗</a>`;
+    if (!it.items?.length) return `<p class="ai-head">間狂言（このサイトには未収録。${link}）</p>`;
+    return `<div class="ai"><p class="ai-head"><span>間狂言</span>OCR のままで、原本との確認をしていません。${link}</p>${it.items.map(x => honbunHTML(x, k)).join("")}</div>`;
   }
   const label = [it.role, it.shodan].filter(Boolean).join(" ");
   return `<p class="u" data-role="${esc(roleKey(it.role || it.role_cont))}">${label ? `<span class="sp">${esc(label)}</span>` : ""}${it.paren ? `<span class="dir">${esc(it.paren)}</span>` : ""}${dirs(it.text)}</p>`;

@@ -178,7 +178,7 @@ def raw_lines(pid, page):
         b = it['boundingBox']; xs = [q[0] for q in b]; ys = [q[1] for q in b]
         top = min(ys) / H; h = (max(ys) - min(ys)) / H
         band = 'prose' if h > 0.45 else 'head' if top < 0.28 else 'honbun' if top < 0.6 else 'tsushaku'
-        out.append(dict(band=band, x=max(xs) / W, t=it['text'].strip()))
+        out.append(dict(band=band, x=max(xs) / W, top=top, h=h, t=it['text'].strip(), c=it.get('confidence', 1)))
     return out
 
 def mark_value(s):
@@ -271,7 +271,7 @@ def roles_of(s, log, page):
     if not s: return ''
     return '・'.join(fix_label(r, log, page) for r in ROLE_SPLIT.findall(s))
 
-def parse_honbun(lines, log, state):
+def parse_honbun(lines, log, state, in_ai=False):
     """行を [{type:'u', role, shodan, paren, q, text} | {type:'note'|'heading'|'ai', ...}] にする。
     役名のない行は直前の謡の続き。小字の役名（kind=role）は、すぐ前かすぐ後の小段名に付ける。"""
     items = []
@@ -295,7 +295,7 @@ def parse_honbun(lines, log, state):
         if k == 'note':
             if items and items[-1]['type'] == 'note': items[-1]['text'] += t
             else: items.append(dict(type='note', text=t))
-            if '中入' in t: ai_from = page
+            if '中入' in t and not in_ai: ai_from = (page, l.get('x', 0))
             continue
         # 本文行
         src = [l.get('img'), *l.get('box', [])]
@@ -325,9 +325,55 @@ def parse_honbun(lines, log, state):
     state['role'] = prev
     if ai_from is not None:
         last_page = max(p for p, _ in lines)
-        items.append(dict(type='ai', pages=[ai_from, last_page]))
+        items.append(dict(type='ai', pages=[ai_from[0], last_page], start=list(ai_from)))
     for it in items: it.pop('_cont', None)
     return items
+
+# ---------- 間狂言 ----------
+# 間狂言は本文・通釈の段をまたぐ長い行で組まれていて、曲ごとの切り出し（split_taikan.py）では散文として除かれている。
+# 中入（または【間】の印）から次の段の印までの範囲を、元の OCR からまとめて取り出す。半魚文庫に対応がないので照合はしていない。
+def extract_ai(pid, start, end, last_page, log):
+    """start/end: (頁, x)。end が None なら曲の終わりまで。発言の並びを返す"""
+    pages = []
+    for pg in range(start[0], (end[0] if end else last_page) + 1):
+        ls, allt = [], []
+        for l in raw_lines(pid, pg):
+            if l['band'] == 'head' or (l['band'] == 'tsushaku' and l['h'] < 0.45): continue
+            allt.append((l['x'], clean(l['t'])))
+            if pg == start[0] and l['x'] >= start[1] - 0.003: continue
+            if end and pg == end[0] and l['x'] <= end[1] + 0.003: continue
+            t = clean(l['t'])
+            if not t or re.fullmatch(r'[\d\s\-ー―・.I|l]+', t) or sum(c in '- ー―' for c in l['t']) > len(l['t']) / 2: continue
+            if l['c'] < 0.3: log.append(dict(page=pg, kind='間狂言の読み崩れ（除外）', ocr=t)); continue
+            ls.append(dict(l, t=t))
+        ls.sort(key=lambda l: -l['x'])
+        allt.sort(key=lambda a: -a[0])
+        pages.append(dict(page=pg, img=f"{base[pid] + pg // 2:04d}{'L' if pg % 2 else 'R'}", lines=ls, allt=[t for _, t in allt]))
+    if pages and pages[0]['img'].endswith('L'):   # 最初の頁が左頁なら、その右頁の終わりとも照合する
+        prev = sorted(((l['x'], clean(l['t'])) for l in raw_lines(pid, start[0] - 1) if l['band'] != 'head'), key=lambda a: -a[0])
+        pages.insert(0, dict(page=start[0] - 1, img=pages[0]['img'][:4] + 'R', lines=[], allt=[t for _, t in prev], dummy=True))
+    for i, p in enumerate(pages):   # 見開きの継ぎ目で二重に出た行
+        if i and p['img'].endswith('L') and pages[i - 1]['img'] == p['img'][:4] + 'R':
+            tail = pages[i - 1]['allt'][-5:]   # 範囲で絞る前の、右頁の終わりの行
+            # 長い行は一部が重なるだけで似て見えるので、ほぼ同じ行だけを重複とする
+            same = lambda a, b: difflib.SequenceMatcher(None, a, b).ratio() >= 0.85 and min(len(a), len(b)) / max(len(a), len(b)) > 0.8
+            js = [j for j, l in enumerate(p['lines'][:5]) if any(same(l['t'], t) for t in tail)]
+            if js: del p['lines'][:js[-1] + 1]
+    pages = [p for p in pages if not p.get('dummy')]
+    lines = []
+    for p in pages:
+        tops = sorted(l['top'] for l in p['lines'])
+        body = tops[len(tops) // 4] if tops else 0
+        for l in p['lines']:
+            t = l['t']
+            m = DAN_LINE.match(t)
+            if m:
+                t = clean(m[3] or '')
+                if not t: continue
+            lm = LABEL.match(t)
+            kind = 'note' if l['top'] > body + 0.02 and not (lm and (lm[1] or lm[2])) else 'text'
+            lines.append((p['page'], dict(t=t, kind=kind, x=l['x'])))
+    return parse_honbun(lines, log, {}, in_ai=True) if lines else []
 
 # ---------- 通釈 ----------
 def parse_tsushaku(lines):
@@ -435,12 +481,24 @@ def build(title):
     if nos != list(range(1, len(nos) + 1)): warn.append(f'段の番号が飛んでいる: {nos}')
     state = {}
     dan = []
-    for d, t in zip(hd, td):
-        if not d['lines'] and not t['lines']: continue
-        if d['ai'] and dan and dan[-1]['honbun'] and dan[-1]['honbun'][-1]['type'] == 'ai':
-            d['page'] = dan[-1]['honbun'].pop()['pages'][0]   # 中入の後と【間】の両方で間狂言になったときは一つに
-        last = max([p for p, _ in d['lines']] or [d['page']])
-        hon = [dict(type='ai', pages=[d['page'], last])] if d['ai'] else parse_honbun(d['lines'], log, state)
+    hpos = lambda b: tuple(b['at'].get('honbun') or b['at'].get('tsushaku'))
+    last_page = max(p['page'] for p in hb)
+    for i, (d, t) in enumerate(zip(hd, td)):
+        if not d['lines'] and not t['lines'] and not d['ai']: continue
+        nxt = hpos(bounds[i + 1]) if i + 1 < len(bounds) else None
+        if d['ai']:
+            start = hpos(bounds[i])
+            if dan and dan[-1]['honbun'] and dan[-1]['honbun'][-1]['type'] == 'ai':
+                start = tuple(dan[-1]['honbun'].pop()['start'])   # 中入の後と【間】の両方で間狂言になったときは一つに
+                d['page'] = start[0]
+            hon = [dict(type='ai', start=list(start))]
+        else:
+            hon = parse_honbun(d['lines'], log, state)
+        if hon and hon[-1]['type'] == 'ai' and not (i + 1 < len(bounds) and bounds[i + 1]['ai']):   # 次が【間】の段ならそちらでまとめる
+            ai = hon[-1]
+            ai['items'] = extract_ai(x['pid'], tuple(ai['start']), nxt, last_page, log)
+            ai['pages'] = [ai['start'][0], nxt[0] if nxt else last_page]
+            if not ai['items']: warn.append(f"【{d['label']}】の間狂言を取り出せなかった")
         dan.append(dict(no=d['no'], label=d['label'], page=d['page'], ai=d['ai'],
                         honbun=hon, tsushaku=parse_tsushaku(t['lines'])))
     for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い
