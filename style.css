@@ -126,8 +126,24 @@ section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
 .t.heading { font-family: var(--serif); font-weight: 600; color: var(--accent); letter-spacing: .3em; }
 .t p { margin: 0; }
 
-mark.issue { background: var(--mark); color: inherit; border-radius: 2px; cursor: help; }
-.issues { font-size: .88rem; margin-top: 24px; }
-.issues h2 { font-size: 1rem; }
-.issues li { margin-bottom: .5em; }
+/* 本文のト書き */
+.col-gen .note { font-size: .82rem; color: var(--muted); margin: 0 0 .7em; padding-left: 13px; }
+.col-gen .ai { font-size: .85rem; color: var(--muted); margin: 0 0 .7em; padding: 6px 10px; border: 1px dashed var(--line); border-radius: 6px; }
+.u .dir { font-family: var(--sans); font-size: .75rem; color: var(--muted); margin: 0 .15em; }
+details.summary { font-size: .9rem; margin: 0 0 12px; }
+details.summary summary { cursor: pointer; color: var(--muted); }
+details.summary p { margin: .4em 0 0; }
 .loading { color: var(--muted); padding: 24px 0; }
+
+/* 説明ページ */
+article.doc { max-width: 760px; font-size: .95rem; }
+article.doc h1, article.doc h2 { font-family: var(--serif); letter-spacing: .05em; }
+article.doc h2 { font-size: 1.5rem; margin: 8px 0 12px; }
+article.doc h3 { font-size: 1.1rem; margin: 28px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+article.doc h4 { font-size: 1rem; margin: 20px 0 6px; }
+article.doc li.sub { margin-left: 1.5em; list-style: circle; }
+article.doc code { font-size: .85em; background: var(--surface); padding: 0 4px; border-radius: 3px; }
+.table-wrap { overflow-x: auto; margin: 8px 0 16px; }
+article.doc table { border-collapse: collapse; font-size: .88rem; }
+article.doc th, article.doc td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; vertical-align: top; }
+article.doc th { background: var(--surface); }

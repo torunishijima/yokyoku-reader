@@ -5,7 +5,7 @@ const app = document.getElementById("app");
 
 let index = null;
 const cache = new Map();
-const listState = { q: "", series: "すべて", season: "", taikanOnly: false };
+const listState = { q: "", nougara: "" };
 
 /* ---------- 共通 ---------- */
 
@@ -28,86 +28,48 @@ async function loadIndex() {
 }
 
 // 検索用に旧字・異体字をそろえる（表示は底本のまま）
-const VARIANTS = { "龍": "竜", "經": "経", "戀": "恋", "櫻": "桜", "鐵": "鉄", "國": "国", "實": "実", "與": "与", "鬪": "闘", "髙": "高" };
+const VARIANTS = { "龍": "竜", "經": "経", "淸": "清", "戀": "恋", "櫻": "桜", "鐵": "鉄", "國": "国", "實": "実", "與": "与", "鬪": "闘", "髙": "高", "辨": "弁", "戶": "戸", "鸚": "鸚", "蘆": "芦" };
 function norm(s) {
   return (s || "").replace(/./g, c => VARIANTS[c] || c);
 }
 
-/* ---------- 原文の解析 ---------- */
+// 能柄の先頭（脇能・修羅物・鬘物 など）を分類に使う
+function nougaraGroup(s) {
+  const m = (s || "").match(/^(脇能|修羅物|鬘物|雜能|雑能|四番目物|切能|切物|五番目物|祝言)/);
+  return m ? m[1].replace("雜", "雑") : (s ? "その他" : "");
+}
 
-// 役名表記から色分け用の役を推定する。表示には底本の表記をそのまま使う。
-function roleOf(label, prev) {
-  if (!label) return prev;
-  if (/^(二人|三人|同吟)/.test(label) || /二人|三人/.test(label)) return "同吟";
-  if (/^(後|前)?シテツレ/.test(label)) return "ツレ";
-  if (/^(後|前)?シテ/.test(label)) return "シテ";
-  if (/^ワキツレ/.test(label)) return "ワキツレ";
-  if (/^ワキ/.test(label)) return "ワキ";
-  if (/^(ツレ|トモ)/.test(label)) return "ツレ";
-  if (/^子(方)?/.test(label)) return "子方";
-  if (/^(地|ロンギ地|キリ地|クセ地)/.test(label) || /^[^「]*地$/.test(label)) return "地";
-  if (/^(狂言|アイ|間|中入間|来序中入間|本間|替間)/.test(label)) return "アイ";
-  // 小段名だけの表記は直前の話者が続いているものとみなす
-  if (/^(詞|サシ|上歌|下歌|歌|上|下|次第|一セイ|一声|セイ|クリ|クセ|ロンギ|キリ|道行|ワカ|ノリ|待謡|名ノリ|カカル|呼掛|上ゲ歌|下ゲ歌|二ノ句|中ノリ|大ノリ)/.test(label)) return prev;
+// 色分け用の役（表示は底本の役名のまま）
+function roleKey(role) {
+  if (!role) return "";
+  if (role.includes("・")) return "同吟";
+  if (/ワキ[ヅツ]レ/.test(role)) return "ワキツレ";
+  if (/ワキ/.test(role)) return "ワキ";
+  if (/シテツレ|ツレ|トモ/.test(role)) return "ツレ";
+  if (/[シジ]テ/.test(role)) return "シテ";
+  if (role === "地") return "地";
+  if (/^子/.test(role)) return "子方";
+  if (/狂言|アイ/.test(role)) return "アイ";
   return "その他";
 }
 
-// 半魚文庫のテキストを発言の配列にする。行頭「役名「」で新しい発言、それ以外の行（改ページ等）は直前の発言につなぐ。
-function parseUtterances(body, prevRole, prevLabel) {
-  const out = [];
-  let role = prevRole || null;
-  for (const raw of body.split("\n")) {
-    const line = raw.replace(/\s+$/, "");
-    if (!line.trim()) continue;
-    const m = line.match(/^([^「」。、\s]{1,14})「(.*)$/);
-    if (m) {
-      role = roleOf(m[1], role);
-      out.push({ label: m[1], role, text: m[2] });
-    } else if (out.length) {
-      out[out.length - 1].text += line.trim();
-    } else {
-      out.push({ label: prevLabel ? prevLabel + "（続き）" : null, role, text: line.trim() });
-    }
-  }
-  return out;
-}
-
-function splitHeader(text) {
-  const i = text.indexOf("――――");
-  return i < 0 ? { head: "", body: text } : { head: text.slice(0, i), body: text.slice(i + 4) };
+function ndlLink(k, page) {
+  return `${k.ndl_url}/1/${k.frame_base + Math.floor(page / 2)}`;
 }
 
 /* ---------- 一覧画面 ---------- */
 
-const MONTHS = ["正", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
-function seasonOrder(s) {
-  if (!s) return 999;
-  const m = s.match(/(十一|十二|正|一|二|三|四|五|六|七|八|九|十)月/);
-  if (m) return MONTHS.indexOf(m[1]) === 0 ? 1 : MONTHS.indexOf(m[1]);
-  return 100;
-}
-
 async function renderList() {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
   const all = await loadIndex();
-  const seasons = [...new Set(all.map(r => r.season).filter(Boolean))].sort((a, b) => seasonOrder(a) - seasonOrder(b) || a.localeCompare(b, "ja"));
-  const noSeason = all.filter(r => !r.season).length;
-  const taikanCount = all.filter(r => r.taikan).length;
+  const groups = [...new Set(all.map(r => nougaraGroup(r.nougara)).filter(Boolean))];
 
   app.innerHTML = `
     <div class="controls">
       <input type="search" id="q" placeholder="曲名で検索" value="${esc(listState.q)}" aria-label="曲名で検索">
-      <div class="row">
-        <div class="tabs" role="group" aria-label="種別">
-          ${["すべて", "本編", "番外", "追加"].map(s => `<button data-series="${s}" aria-pressed="${listState.series === s}">${s}</button>`).join("")}
-        </div>
-        <select id="season" aria-label="季節">
-          <option value="">季節：すべて</option>
-          ${seasons.map(s => `<option value="${esc(s)}" ${listState.season === s ? "selected" : ""}>${esc(s)}</option>`).join("")}
-          <option value="__none" ${listState.season === "__none" ? "selected" : ""}>季節なし（${noSeason}曲）</option>
-        </select>
-        <label class="check"><input type="checkbox" id="taikanOnly" ${listState.taikanOnly ? "checked" : ""}> 通釈ありのみ</label>
-      </div>
+      ${groups.length > 1 ? `<div class="tabs" role="group" aria-label="能柄">
+        ${["", ...groups].map(g => `<button data-g="${esc(g)}" aria-pressed="${listState.nougara === g}">${esc(g || "すべて")}</button>`).join("")}
+      </div>` : ""}
       <div class="count" id="count"></div>
     </div>
     <ul class="list" id="list"></ul>`;
@@ -119,24 +81,19 @@ async function renderList() {
     const q = norm(listState.q.trim());
     const rows = all.filter(r =>
       (!q || norm(r.title).includes(q)) &&
-      (listState.series === "すべて" || r.series === listState.series) &&
-      (!listState.season || (listState.season === "__none" ? !r.season : r.season === listState.season)) &&
-      (!listState.taikanOnly || r.taikan)
-    );
-    countEl.textContent = `${rows.length}曲を表示（全${all.length}曲中、通釈あり${taikanCount}曲）`;
+      (!listState.nougara || nougaraGroup(r.nougara) === listState.nougara));
+    countEl.textContent = `${rows.length}曲を表示（本文の確認が済んだ${all.length}曲を収録。謡曲大観の全282曲から順次追加）`;
     listEl.innerHTML = rows.length ? rows.map(r => `
-      <li><a href="#/kyoku/${encodeURIComponent(r.file.replace(/\.txt$/, ""))}">
-        <div class="kyoku-title">${esc(r.title)}${r.taikan ? `<span class="badge">通釈</span>` : ""}</div>
-        <div class="kyoku-meta">${esc(r.series)}・${esc(r.season || "季節なし")}${r.cast?.length ? "・シテ " + esc((r.cast.find(c => c.role === "シテ") || r.cast[0]).name) : ""}</div>
+      <li><a href="#/kyoku/${encodeURIComponent(r.title)}">
+        <div class="kyoku-title">${esc(r.title)}</div>
+        <div class="kyoku-meta">${esc([r.nougara, r.toki].filter(Boolean).join("・") || r.volume)}</div>
       </a></li>`).join("") : `<li class="empty">該当する曲はありません。</li>`;
   }
 
   document.getElementById("q").addEventListener("input", e => { listState.q = e.target.value; update(); });
-  document.getElementById("season").addEventListener("change", e => { listState.season = e.target.value; update(); });
-  document.getElementById("taikanOnly").addEventListener("change", e => { listState.taikanOnly = e.target.checked; update(); });
-  app.querySelectorAll("[data-series]").forEach(b => b.addEventListener("click", () => {
-    listState.series = b.dataset.series;
-    app.querySelectorAll("[data-series]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  app.querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => {
+    listState.nougara = b.dataset.g;
+    app.querySelectorAll("[data-g]").forEach(x => x.setAttribute("aria-pressed", x === b));
     update();
   }));
   update();
@@ -144,146 +101,144 @@ async function renderList() {
 
 /* ---------- 詳細画面 ---------- */
 
-function metaBlock(r) {
-  const cast = (r.cast || []).map(c => `${esc(c.role)}　${esc(c.name)}`).join("<br>");
+function infoBlock(k) {
+  const i = k.info || {};
+  const rows = [["能柄", i.能柄], ["人物", i.人物], ["所", i.所], ["時", i.時], ["流派", i.流派]].filter(([, v]) => v);
   return `
-    <dl class="meta">
-      <dt>種別</dt><dd>${esc(r.series)}（${esc(r.number)}）</dd>
-      <dt>季節</dt><dd>${r.season ? esc(r.season) : "なし"}</dd>
-      <dt>配役</dt><dd>${cast || "なし"}</dd>
-      <dt>底本</dt><dd>${r.source_text ? esc(r.source_text) : "なし"}</dd>
-    </dl>`;
+    <dl class="meta">${rows.map(([t, v]) => `<dt>${t}</dt><dd>${esc(v).replace(/\n/g, "<br>")}</dd>`).join("")}</dl>
+    ${i.梗概 ? `<details class="summary"><summary>梗概</summary><p>${esc(i.梗概)}</p></details>` : ""}`;
 }
 
-function markIssues(html, issues) {
-  for (const is of issues || []) {
-    const s = esc(is.hangyo);
-    if (html.includes(s)) {
-      html = html.split(s).join(`<mark class="issue" title="${esc("謡曲大観本文：" + is.taikan_honbun)}">${s}</mark>`);
-    }
+// 本文中の（ト書き）を小さく
+function dirs(s) {
+  return esc(s).replace(/([(（〔][^)）〕]*[)）〕])/g, `<span class="dir">$1</span>`);
+}
+
+function honbunHTML(it, k) {
+  if (it.type === "note") return `<p class="note">${esc(it.text)}</p>`;
+  if (it.type === "heading") return `<p class="note">${esc(it.text)}</p>`;
+  if (it.type === "ai") {
+    const [a, b] = it.pages;
+    return `<p class="ai">間狂言（このサイトには未収録。<a href="${esc(ndlLink(k, a))}" target="_blank" rel="noopener">原本 ${a}${b !== a ? "–" + b : ""}頁 ↗</a>）</p>`;
   }
-  return html;
+  const label = [it.role, it.shodan].filter(Boolean).join(" ");
+  return `<p class="u" data-role="${esc(roleKey(it.role))}">${label ? `<span class="sp">${esc(label)}</span>` : ""}${it.paren ? `<span class="dir">${esc(it.paren)}</span>` : ""}${dirs(it.text)}</p>`;
 }
 
-function utteranceHTML(u, issues) {
-  return `<p class="u" data-role="${esc(u.role || "")}">${u.label ? `<span class="sp">${esc(u.label)}</span>` : ""}${markIssues(esc(u.text), issues)}</p>`;
+function tsuHTML(it) {
+  if (it.type === "speech") return `<div class="t"><span class="sp">${esc(it.speaker)}</span>「${esc(it.text)}」</div>`;
+  if (it.type === "gloss") return `<div class="t gloss">${esc(it.text.replace(/^[(（]|[)）]$/g, ""))}</div>`;
+  return `<div class="t ${esc(it.type)}">${esc(it.text)}</div>`;
 }
 
-function roleFilterHTML(utts) {
-  const roles = [...new Set(utts.map(u => u.role).filter(Boolean))];
-  if (roles.length < 2) return "";
-  return `<div class="tabs" role="group" aria-label="話者で絞り込み">
+function roleFilterHTML(keys) {
+  if (keys.length < 2) return "";
+  return `<div class="tabs" role="group" aria-label="役で絞り込み">
     <button class="chip" data-role-filter="" aria-pressed="true">全員</button>
-    ${roles.map(r => `<button class="chip" data-role-filter="${esc(r)}" aria-pressed="false">${esc(r)}</button>`).join("")}
+    ${keys.map(r => `<button class="chip" data-role-filter="${esc(r)}" aria-pressed="false">${esc(r)}</button>`).join("")}
   </div>`;
 }
 
-function bindRoleFilter() {
+async function renderKyoku(title) {
+  app.innerHTML = `<p class="loading">読み込み中…</p>`;
+  const all = await loadIndex();
+  if (!all.find(x => x.title === title)) { app.innerHTML = `<p class="empty">曲が見つかりません。<a href="#/">一覧へ戻る</a></p>`; return; }
+  const k = JSON.parse(await fetchText(DATA + "kyoku/" + encodeURIComponent(title) + ".json"));
+  document.title = `${k.title}｜謡曲リーダー`;
+
+  const order = ["シテ", "ツレ", "ワキ", "ワキツレ", "地", "子方", "同吟", "アイ", "その他"];
+  const keys = [...new Set(k.dan.flatMap(d => d.honbun.filter(u => u.type === "u").map(u => roleKey(u.role))).filter(Boolean))]
+    .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+
+  app.innerHTML = `<a href="#/" class="back">← 一覧へ</a>
+    <h1 class="kyoku">${esc(k.title)}</h1>
+    ${infoBlock(k)}
+    <p class="notice">本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR で文字に起こしたものです。
+      本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました（訂正 ${k.check.fixes} 件）。ト書き・通釈・曲情報は OCR のままで、誤りが残っています。
+      各段の「原本」から国立国会図書館の画像で確かめられます。<a href="#/about">作り方と確認の範囲</a></p>
+    <div class="toolbar">
+      <div class="row">
+        <div class="tabs" role="group" aria-label="表示">
+          <button data-view="both" aria-pressed="true">本文と通釈</button>
+          <button data-view="gen" aria-pressed="false">本文のみ</button>
+          <button data-view="tsu" aria-pressed="false">通釈のみ</button>
+        </div>
+        ${roleFilterHTML(keys)}
+      </div>
+    </div>
+    <div id="body" data-view="both">
+      ${k.dan.map(d => `
+        <section class="dan" id="dan${d.no ?? "ai"}">
+          <div class="dan-head"><h2>【${esc(d.label)}】</h2><a href="${esc(ndlLink(k, d.page))}" target="_blank" rel="noopener">原本 ${d.page}頁 ↗</a></div>
+          <div class="cols">
+            <div class="col-gen"><div class="col-label">本文</div>${d.honbun.map(it => honbunHTML(it, k)).join("")}</div>
+            <div class="col-tsu"><div class="col-label">通釈</div>${d.tsushaku.map(tsuHTML).join("")}</div>
+          </div>
+        </section>`).join("")}
+    </div>
+    <p class="count">出典：佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院、パブリックドメイン）、<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>。
+      文字起こし：NDLOCR-Lite（国立国会図書館、CC BY 4.0）。話者の色分けは役名からの推定です。</p>`;
+
+  const bodyEl = document.getElementById("body");
+  app.querySelectorAll("button[data-view]").forEach(b => b.addEventListener("click", () => {
+    bodyEl.dataset.view = b.dataset.view;
+    app.querySelectorAll("button[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  }));
   app.querySelectorAll("[data-role-filter]").forEach(b => b.addEventListener("click", () => {
     const r = b.dataset.roleFilter;
     app.querySelectorAll("[data-role-filter]").forEach(x => x.setAttribute("aria-pressed", x === b));
     app.querySelectorAll(".u").forEach(u => u.classList.toggle("hidden", !!r && u.dataset.role !== r));
   }));
+  window.scrollTo(0, 0);
 }
 
-// 歌の通釈（gloss）をはさんで台詞が続く場合は、かぎ括弧を前後でつなげる
-function tsuHTML(it, i, items) {
-  const text = esc(it.text).replace(/\n/g, "<br>");
-  if (it.type === "speech") {
-    const open = it.continued ? "" : `<span class="sp">${esc(it.speaker)}</span>「`;
-    const close = items[i + 2]?.continued ? "" : "」";
-    return `<div class="t">${open}${text}${close}</div>`;
+/* ---------- 説明ページ（docs/taikan_ocr.md を表示） ---------- */
+
+// 説明ページ用の小さな Markdown 変換（見出し・段落・箇条書き・表・リンク・太字・コード）
+function inlineMd(s) {
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, u) => `<a href="${/^https?:/.test(u) ? u : "#/about"}"${/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : ""}>${t}</a>`);
+}
+function md(src) {
+  const out = [];
+  const lines = src.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (!l.trim()) continue;
+    let m;
+    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = Math.min(m[1].length + 1, 4); out.push(`<h${n}>${inlineMd(m[2])}</h${n}>`); continue; }
+    if (/^\|/.test(l)) {
+      const rows = [];
+      for (; i < lines.length && /^\|/.test(lines[i]); i++) rows.push(lines[i]);
+      i--;
+      const cells = r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const body = rows.filter(r => !/^\|[\s:|-]+\|$/.test(r));
+      out.push(`<div class="table-wrap"><table><thead><tr>${cells(body[0]).map(c => `<th>${inlineMd(c)}</th>`).join("")}</tr></thead><tbody>${
+        body.slice(1).map(r => `<tr>${cells(r).map(c => `<td>${inlineMd(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      continue;
+    }
+    if (/^\s*- /.test(l)) {
+      const items = [];
+      for (; i < lines.length && /^\s*- /.test(lines[i]); i++) items.push(`<li${/^\s{2,}/.test(lines[i]) ? ' class="sub"' : ""}>${inlineMd(lines[i].replace(/^\s*- /, ""))}</li>`);
+      i--;
+      out.push(`<ul>${items.join("")}</ul>`);
+      continue;
+    }
+    const para = [l];
+    for (i++; i < lines.length && lines[i].trim() && !/^(#|\||\s*- )/.test(lines[i]); i++) para.push(lines[i]);
+    i--;
+    out.push(`<p>${para.map(inlineMd).join("<br>")}</p>`);
   }
-  return `<div class="t ${esc(it.type)}">${text}</div>`;
+  return out.join("\n");
 }
 
-function ndlLink(src, page) {
-  if (!src.frame_ref) return src.ndl_url;
-  const f = src.frame_ref.frame + Math.ceil((page - src.frame_ref.page) / 2);
-  return `${src.ndl_url}/1/${f}`;
-}
-
-async function renderKyoku(id) {
+async function renderAbout() {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
-  const all = await loadIndex();
-  const r = all.find(x => x.file === id + ".txt");
-  if (!r) { app.innerHTML = `<p class="empty">曲が見つかりません。<a href="#/">一覧へ戻る</a></p>`; return; }
-
-  const [raw, tk] = await Promise.all([
-    fetchText(DATA + "hangyo/" + r.file),
-    r.taikan ? fetchText(DATA + "taikan/" + r.taikan).then(JSON.parse) : null,
-  ]);
-  const { body } = splitHeader(raw);
-  document.title = `${r.title}｜謡曲リーダー`;
-
-  let html = `<a href="#/" class="back">← 一覧へ</a>
-    <h1 class="kyoku">${esc(r.title)}</h1>
-    ${metaBlock(r)}`;
-
-  if (!tk) {
-    const utts = parseUtterances(body);
-    html += `<p class="notice">原文のみ（現代語訳はありません）</p>
-      <div class="toolbar">${roleFilterHTML(utts)}</div>
-      <div class="col-gen">${utts.map(u => utteranceHTML(u)).join("")}</div>
-      <p class="count">原文出典：半魚文庫「謡曲三百五十番集」（${esc(r.file)}）。話者の色分けは役名表記からの推定です。</p>`;
-    app.innerHTML = html;
-    bindRoleFilter();
-    window.scrollTo(0, 0);
-    return;
-  }
-
-  // 段ごとに原文を切り分ける
-  const starts = tk.dan.map(d => body.indexOf(d.hangyo_anchor));
-  if (starts.some((p, i) => p < 0 || (i && p < starts[i - 1]))) {
-    app.innerHTML = html + `<p class="notice">通釈データの段の位置が原文と合いません（${esc(r.taikan)}）。データを確認してください。</p>`;
-    return;
-  }
-  const head = parseUtterances(body.slice(0, starts[0]));
-  let prev = head.length ? head[head.length - 1] : null;
-  const chunks = tk.dan.map((d, i) => {
-    const u = parseUtterances(body.slice(starts[i], starts[i + 1] ?? body.length), prev?.role, prev?.label?.replace(/（続き）$/, ""));
-    if (u.length) prev = u[u.length - 1];
-    return u;
-  });
-  const allUtts = head.concat(...chunks);
-
-  html += `<p class="notice">通釈は佐成謙太郎『謡曲大観』（${esc(tk.source.book.replace(/^.*』/, ""))}、${esc(tk.source.pages)}頁）による。段（【一】【二】…）も同書の区切り。書き起こしは画像からの読み取りで${esc(tk.transcription.status)}です。各段の「原本」から国立国会図書館の画像で確認できます。</p>
-    <div class="toolbar">
-      <div class="row">
-        <div class="tabs" role="group" aria-label="表示">
-          <button data-view="both" aria-pressed="true">原文と通釈</button>
-          <button data-view="gen" aria-pressed="false">原文のみ</button>
-          <button data-view="tsu" aria-pressed="false">通釈のみ</button>
-        </div>
-        ${roleFilterHTML(allUtts)}
-      </div>
-    </div>
-    <div id="body" data-view="both">
-      ${head.length ? `<section class="dan"><div class="cols"><div class="col-gen">${head.map(u => utteranceHTML(u, tk.text_issues)).join("")}</div></div></section>` : ""}
-      ${tk.dan.map((d, i) => `
-        <section class="dan" id="dan${d.no}">
-          <div class="dan-head"><h2>【${esc(d.label)}】</h2><a href="${esc(ndlLink(tk.source, d.page))}" target="_blank" rel="noopener">原本 ${esc(d.page)}頁 ↗</a></div>
-          <div class="cols">
-            <div class="col-gen"><div class="col-label">原文</div>${chunks[i].map(u => utteranceHTML(u, tk.text_issues)).join("")}</div>
-            <div class="col-tsu"><div class="col-label">通釈（謡曲大観）</div>${d.items.map(tsuHTML).join("")}</div>
-          </div>
-        </section>`).join("")}
-    </div>
-    ${tk.omitted?.length ? `<p class="count">通釈を収録していない箇所：${tk.omitted.map(o => `${esc(o.content)}（${esc(o.pages)}頁）`).join("、")}</p>` : ""}
-    ${tk.text_issues?.length ? `<div class="issues"><h2>原文の異同</h2><ul>${tk.text_issues.map(is => `
-      <li>半魚文庫「<mark class="issue">${esc(is.hangyo)}</mark>」→ 謡曲大観本文「${esc(is.taikan_honbun)}」（${esc(is.page)}頁）<br><span class="count">${esc(is.note)}</span></li>`).join("")}</ul></div>` : ""}
-    <p class="count">原文出典：半魚文庫「謡曲三百五十番集」（${esc(r.file)}）。通釈：${esc(tk.source.book)}（${esc(tk.source.publisher)} ${esc(tk.source.year)}）、<a href="${esc(tk.source.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>。書き起こし：${esc(tk.transcription.by)}、${esc(tk.transcription.date)}。</p>`;
-
-  app.innerHTML = html;
-  const bodyEl = document.getElementById("body");
-  app.querySelectorAll("[data-view]").forEach(b => {
-    if (b.id === "body") return;
-    b.addEventListener("click", () => {
-      bodyEl.dataset.view = b.dataset.view;
-      app.querySelectorAll("button[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
-    });
-  });
-  bindRoleFilter();
+  const src = await fetchText("docs/taikan_ocr.md");
+  document.title = "本文の作り方と確認の方法｜謡曲リーダー";
+  app.innerHTML = `<a href="#/" class="back">← 一覧へ</a><article class="doc">${md(src)}</article>`;
   window.scrollTo(0, 0);
 }
 
@@ -293,6 +248,7 @@ async function route() {
   const m = location.hash.match(/^#\/kyoku\/(.+)$/);
   try {
     if (m) await renderKyoku(decodeURIComponent(m[1]));
+    else if (location.hash === "#/about") await renderAbout();
     else { document.title = "謡曲リーダー"; await renderList(); }
   } catch (e) {
     app.innerHTML = `<p class="notice">${esc(e.message)}<br>ファイルを直接開いた場合は読み込めません。README の手順でローカルサーバーを起動してください。</p>`;
