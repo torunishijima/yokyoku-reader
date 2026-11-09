@@ -112,9 +112,12 @@ const BACK = `<a href="#/" class="back">← 曲の一覧に戻る</a>`;
 function infoBlock(k) {
   const i = k.info || {};
   const rows = [["能柄", i.能柄], ["人物", i.人物], ["所", i.所], ["時", i.時], ["流派", i.流派]].filter(([, v]) => v);
+  // 曲情報・梗概は解説の頁（曲の最初の頁とその次）の OCR のまま。原本の画像で確かめられるようにする
+  const src = `<p class="meta-src"><a href="${esc(ndlLink(k, k.start_page))}" target="_blank" rel="noopener">解説の原本 ${k.start_page}頁 ↗</a></p>`;
   return `
     <dl class="meta">${rows.map(([t, v]) => `<dt>${t}</dt><dd>${esc(v).replace(/\n/g, "<br>")}</dd>`).join("")}</dl>
-    ${i.梗概 ? `<div class="summary"><h2>梗概</h2><p>${esc(i.梗概)}</p></div>` : ""}`;
+    ${i.梗概 ? `<div class="summary"><h2>梗概</h2><p>${esc(i.梗概)}</p></div>` : ""}
+    ${src}`;
 }
 
 // 本文中の（ト書き）を小さく
