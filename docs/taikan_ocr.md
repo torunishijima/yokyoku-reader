@@ -127,3 +127,8 @@
 | `build_kyoku.py` | 訂正を当てて、段・役名・ト書きを整え、このリーダーのデータを作る |
 | `build_index.py` | 曲の一覧を作る |
 | `fetch_yomi.py` | 曲名の読みを国立国会図書館サーチの書誌データから集める |
+
+## 謝辞
+
+本文の確認には、[半魚文庫](https://hangyo.sakura.ne.jp/utahi/)「謡曲三百五十番集」（JALLC TANOMOSHI project No.1）の本文を照合用に使わせていただきました。このテキストがなければ、OCR の誤りを探す手がかりがほとんどなく、このリーダーは作れませんでした。
+長年にわたって入力・校正を続け、無償で公開してくださっている、半魚文庫の高橋明彦氏（TAKAHASHI Akihiko、金沢美術工芸大学 Kanazawa College of Art）に、心より感謝いたします。
