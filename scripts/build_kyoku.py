@@ -431,7 +431,8 @@ def parse_tsushaku(lines):
 INFO_KEYS = ['能柄', '人物', '所', '時', '作者', '梗槪', '梗概']
 def read_info(x):
     pid = x['pid']; txt = ''
-    for p in (x['page'], x['page'] + 1):
+    for p in (x['page'], x['page'] + 1, x['page'] + 2):
+        if p == x['page'] + 2 and ('梗' in txt or '別巻' in x['volume']): break   # 解説が 3 頁にわたる曲（翁）だけ 3 頁目も読む
         f = OCR / pid / f'f{base[pid] + p // 2:04d}{"L" if p % 2 else "R"}.txt'
         if f.exists(): txt += f.read_text(encoding='utf-8') + '\n'
     info = {}
@@ -440,11 +441,16 @@ def read_info(x):
     # 読み誤った印をそろえる（「時〕」→【時】、「者】」「[者】」→【作者】）
     txt = re.sub(r'[【\[〔]?時[〕\]】]', '【時】', txt)
     txt = re.sub(r'(?:【作|[\[〔(]|作)?者】', '【作者】', txt)
+    txt = re.sub(r'[『【\[〔(]梗[槪概][〕】\])]', '【梗概】', txt)
     # 梗概の 1 行目が見出しより前に読まれることがある（船辨慶・大蛇）。文の途中で切れた行が見出しの直前にあれば梗概の頭へ戻す
     txt = re.sub(r'\n([^\n【】]*[^\n【】。」）)\s])\n(【梗[槪概]】)\n', r'\n\2\n\1', txt)
     parts = re.split(r'【([^】]{0,4})】', txt)
-    for k, v in zip(parts[1::2], parts[2::2]):
+    keys = parts[1::2]
+    for i, (k, v) in enumerate(zip(keys, parts[2::2])):
         k = '梗概' if k in ('梗槪', '梗概') else k
+        # 見出しを読み誤ったとき（蘆刈の【裸紙】）: 知らない 2 字の見出しで、次が【出典】なら梗概
+        if k not in INFO_KEYS + ['出典', '槪評', '概評', '異稱'] and len(k) == 2 and i + 1 < len(keys) and keys[i + 1] == '出典' and '梗概' not in info: k = '梗概'
+        if k == '梗概': v = re.sub(r'^\s*(?:梗[槪概])?[】○]', '', v)   # 見出しを二重に読んだ残り（飛鳥川）
         if k in ('能柄', '人物', '所', '時', '梗概') and k not in info:
             v = v.strip()
             info[k] = '\n'.join(re.sub(r'\s+', '', x) for x in v.split('\n')) if k == '人物' else re.sub(r'\s+', '', v)
