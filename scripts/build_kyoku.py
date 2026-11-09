@@ -402,6 +402,7 @@ def parse_tsushaku(lines):
         if l.get('kind') == 'heading': flush(); items.append(dict(type='heading', text=t)); continue
         starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or t in ('前段', '後段')
         small = l.get('small', False)
+        if buf and len(t) <= 5 and not re.search(r'[。」)）]$', buf['text']): small = buf['small']   # 段落末の短い行（「つた。」）は字の大きさを測れないので前の行に合わせる
         if depth and buf and re.match(r'^[^「『(（\s。、,，-]{1,6}「', t) and re.match(r'^[^「『(（\s。、]{1,10}「', buf['text']): depth = 0   # 閉じ括弧の読み落とし: 行頭に次の話し手が来たら台詞を区切る（敦盛の蓮生→草刈）
         if depth and buf and small and not buf['small'] and re.match(r'^[^「『(（\s。、]{1,10}[「『]', buf['text']) and len(t) >= 8 and not re.search(r'[」』()（）…]', t) \
                 and buf['text'].count('(') + buf['text'].count('（') <= buf['text'].count(')') + buf['text'].count('）'): depth = 0   # 台詞の閉じ括弧の読み落とし: 小字の行（説明）に変わったら台詞を区切る
