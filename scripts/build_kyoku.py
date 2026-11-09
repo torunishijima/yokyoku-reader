@@ -334,19 +334,23 @@ def parse_tsushaku(lines):
         nonlocal buf
         if buf:
             t = buf['text']
-            m = re.match(r'^([^「『(（\s。、]{1,10})「(.*)$', t, re.S)
+            m = re.match(r'^([^「『(（\s。、]{1,10})(\([^)）]{1,12}[)）])?[「『](.*)$', t, re.S)
             if t in ('前段', '後段'): items.append(dict(type='heading', text=t))
-            elif m: items.append(dict(type='speech', speaker=m[1], text=m[2].rstrip('」') if m[2].endswith('」') and m[2].count('「') < m[2].count('」') else m[2]))
+            elif re.fullmatch(r'[一二三四五六七八九〇十\d\s\-ー―・.*＊、,]+', t): pass   # 頁番号などのゴミ
+            elif m and not buf.get('small'):
+                body = (m[2] or '') + m[3]
+                items.append(dict(type='speech', speaker=m[1], text=body[:-1] if body.endswith('」') and body.count('「') < body.count('」') else body))
             elif re.match(r'^[(（].*[)）]$', t, re.S): items.append(dict(type='gloss', text=t))
-            else: items.append(dict(type='narration', text=t))
+            else: items.append(dict(type='note' if buf.get('small') else 'narration', text=t))
         buf = None
     for page, l in lines:
         t = l['t']
         if l.get('kind') in ('junk',): continue
         if l.get('kind') == 'heading': flush(); items.append(dict(type='heading', text=t)); continue
-        starts = bool(re.match(r'^[^「『(（\s。、]{1,10}「', t)) or t[:1] in '(（' or t in ('前段', '後段')
-        if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']))) or t in ('前段', '後段'):
-            flush(); buf = dict(text=t, page=page)
+        starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or t in ('前段', '後段')
+        small = l.get('small', False)
+        if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']) or small != buf['small'])) or t in ('前段', '後段'):
+            flush(); buf = dict(text=t, page=page, small=small)
         else:
             buf['text'] += t
         depth = max(0, depth + t.count('「') + t.count('(') + t.count('（') - t.count('」') - t.count(')') - t.count('）'))
@@ -400,8 +404,15 @@ def build(title):
     dedupe(hb, log); dedupe(ts, log)
     classify(hb)
     for p in ts:
+        # 通釈の地の文（所作・場面の説明）は小さい字で一段下げて印刷されている
+        tops = sorted(l['box'][1] for l in p['lines'])
+        med = tops[len(tops) // 4] if tops else 0   # 小さい字の行が多い頁もあるので下側 1/4 の位置
+        ws = sorted(l['box'][2] - l['box'][0] for l in p['lines'] if len(clean(l['t'])) >= 12)
+        wmed = ws[len(ws) * 3 // 4] if ws else 0   # 普通の字の行幅（上側 1/4 の位置）
         for l in p['lines']:
             l['t'] = clean(l['t'])
+            w = l['box'][2] - l['box'][0]
+            l['small'] = l['box'][1] > med + 35 or (len(l['t']) >= 6 and w < wmed * 0.8)
             if not l['t'] or re.fullmatch(r'[\d\s\-ー―・.]+', l['t']): l['kind'] = 'junk'
     extra = [dict(band=band, page=p['page'], x=l['x'], inner=m[1])
              for band, pages in (('honbun', hb), ('tsushaku', ts)) for p in pages for l in p['lines']
