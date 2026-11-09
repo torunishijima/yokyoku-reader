@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """本文 OCR の行を、指定した文字列で探して原本画像から切り出し、横に並べた 1 枚にする（シートに出ない行を確かめる用）。
-使い方: ~/tools/textvenv/bin/python scripts/crop_lines.py <曲名> <出力.jpg> <文字列> [<文字列> ...]
+使い方: ~/tools/textvenv/bin/python scripts/crop_lines.py [--tsushaku] <曲名> <出力.jpg> <文字列> [<文字列> ...]
+  --tsushaku で通釈の行から探す。
   ヒットした行ごとに、その行の周り（行頭から下へ約 1000px）を赤枠付きで切り出す。右から左へ並ぶ。"""
 import sys, json, time, urllib.request
 from pathlib import Path
@@ -23,9 +24,12 @@ def half(pid, stem):
     tmp.unlink()
     return Image.open(p)
 
-title, out, subs = sys.argv[1], sys.argv[2], sys.argv[3:]
-txt = (SPLIT / f'{title}.honbun.txt').read_text(encoding='utf-8').splitlines()
-lj = json.loads((SPLIT / f'{title}.honbun.lines.json').read_text(encoding='utf-8'))
+args = sys.argv[1:]
+part = 'tsushaku' if args[0] == '--tsushaku' else 'honbun'
+if part == 'tsushaku': args = args[1:]
+title, out, subs = args[0], args[1], args[2:]
+txt = (SPLIT / f'{title}.{part}.txt').read_text(encoding='utf-8').splitlines()
+lj = json.loads((SPLIT / f'{title}.{part}.lines.json').read_text(encoding='utf-8'))
 crops = []
 for s in subs:
     for t, m in zip(txt, lj):

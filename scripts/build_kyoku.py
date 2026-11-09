@@ -388,9 +388,11 @@ def parse_tsushaku(lines):
             m = re.match(r'^([^「『(（\s。、]{1,10})(\([^)）]{1,12}[)）])?[「『](.*)$', t, re.S)
             if t in ('前段', '後段'): items.append(dict(type='heading', text=t))
             elif re.fullmatch(r'[一二三四五六七八九〇十\d\s\-ー―・.*＊、,]+', t): pass   # 頁番号などのゴミ
+            elif m and (re.fullmatch(r'[ぁ-ゖ]+', m[1]) or re.search(r'[-ー―]', m[1])):   # 「と「笠づくし」の…」「英雄--『…」は話し手ではない
+                items.append(dict(type='note' if buf['nsmall'] * 2 > buf['n'] else 'narration', text=t))
             elif m:   # 「名前「…」」の形は字の大きさに関係なく台詞
                 body = (m[2] or '') + m[3]
-                items.append(dict(type='speech', speaker=m[1], text=body[:-1] if body.endswith('」') and body.count('「') < body.count('」') else body))
+                items.append(dict(type='speech', speaker=unicodedata.normalize('NFC', m[1]), text=body[:-1] if body.endswith('」') and body.count('「') < body.count('」') else body))
             elif re.match(r'^[(（].*[)）]$', t, re.S): items.append(dict(type='gloss', text=t))
             else: items.append(dict(type='note' if buf['nsmall'] * 2 > buf['n'] else 'narration', text=t))
         buf = None
@@ -400,6 +402,9 @@ def parse_tsushaku(lines):
         if l.get('kind') == 'heading': flush(); items.append(dict(type='heading', text=t)); continue
         starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or t in ('前段', '後段')
         small = l.get('small', False)
+        if depth and buf and re.match(r'^[^「『(（\s。、,，-]{1,6}「', t) and re.match(r'^[^「『(（\s。、]{1,10}「', buf['text']): depth = 0   # 閉じ括弧の読み落とし: 行頭に次の話し手が来たら台詞を区切る（敦盛の蓮生→草刈）
+        if depth and buf and small and not buf['small'] and re.match(r'^[^「『(（\s。、]{1,10}[「『]', buf['text']) and len(t) >= 8 and not re.search(r'[」』()（）…]', t) \
+                and buf['text'].count('(') + buf['text'].count('（') <= buf['text'].count(')') + buf['text'].count('）'): depth = 0   # 台詞の閉じ括弧の読み落とし: 小字の行（説明）に変わったら台詞を区切る
         if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']) or small != buf['small'])) or t in ('前段', '後段'):
             flush(); buf = dict(text=t, page=page, small=small, n=0, nsmall=0)
         else:

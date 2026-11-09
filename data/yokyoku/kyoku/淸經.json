@@ -19,7 +19,7 @@
  },
  "check": {
   "status": "確認済み",
-  "fixes": 11
+  "fixes": 12
  },
  "dan": [
   {
@@ -318,11 +318,6 @@
      "type": "speech",
      "speaker": "妻",
      "text": "して、唯今は何の爲の御使に來たのか"
-    },
-    {
-     "type": "speech",
-     "speaker": "受体",
-     "text": "コール」、SEL"
     },
     {
      "type": "speech",
@@ -1144,6 +1139,12 @@
    "kind": "訂正",
    "ocr": "ッシ『かやうに",
    "fixed": "ツレ『かやうに"
+  },
+  {
+   "page": 844,
+   "kind": "訂正",
+   "ocr": "受体「コール」、SEL〔?〕",
+   "fixed": ""
   },
   {
    "page": 844,
