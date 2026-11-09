@@ -177,7 +177,7 @@ async function renderKyoku(title) {
       <p>本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR（NDLOCR-Lite）で文字に起こしたものです。
         本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました。ト書き・通釈・曲情報・間狂言は OCR のままで、誤りが残っている可能性があります。
         各段や曲情報の下の「原本」から<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>の画像で確かめられます。話者の色分けは役名からの推定です。</p>
-      <p><a href="#/about">本文の作り方と確認の範囲</a></p>
+      <p><a href="#/about">凡例</a></p>
     </div>
     ${BACK}`;
 
@@ -234,7 +234,7 @@ function md(src) {
 async function renderAbout() {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
   const src = await fetchText("docs/taikan_ocr.md");
-  document.title = "本文の作り方と確認の方法｜謡曲リーダー";
+  document.title = "凡例｜謡曲リーダー";
   app.innerHTML = `${BACK}<article class="doc">${md(src)}</article>${BACK}`;
   window.scrollTo(0, 0);
 }
