@@ -5,3 +5,4 @@ private/
 # 作業用（OCR結果・画像・半魚文庫の照合用テキストなど。公開しない）。確認作業の訂正記録だけは入れる
 work/*
 !work/fixes/
+!work/yomi_ndl.json

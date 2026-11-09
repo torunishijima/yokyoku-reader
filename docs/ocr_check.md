@@ -38,6 +38,7 @@
    - 本文の位置にあるがト書きの行は、備考を「ト書き：…」で始めるとト書きとして扱う。
    - 要確認が 0 になるまで 4・5 をくり返す。
 6. 検索用の読み仮名を `data/yokyoku/taikan_toc.json` のその曲に `"yomi": "たかさご"` の形で足す（現代仮名遣いのひらがな。大観には読みが載っていない）。
+   `python3 scripts/fetch_yomi.py <曲名>` で国立国会図書館サーチの謡本の書名の読みを集め（1 曲 1〜2 分）、`work/yomi_ndl.json` の多数決の読みと合っているか確かめる。国立国会図書館は「づ・ぢ」を「ず・じ」と書くので、そこは違ってよい。
 7. 一覧を作り直す: `python3 scripts/build_index.py`（読みのない曲があると知らせる）
 
 ## 判定の注意
@@ -59,6 +60,7 @@
 | `scripts/build_kyoku.py` | 訂正を当てて、サイト用の曲データ（`data/yokyoku/kyoku/`）を作る |
 | `scripts/role_check.py` | 役名を半魚文庫と照合し、要確認の箇所をシートにする |
 | `scripts/build_index.py` | 一覧データを作る |
+| `scripts/fetch_yomi.py` | 曲名の読みを国立国会図書館サーチから集める |
 | `scripts/check_status.py` | 進み具合 |
 
 `collate.py` と `make_checks.py` は `~/tools/textvenv/bin/python`（pykakasi・Pillow 入り）で動かす。

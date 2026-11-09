@@ -33,7 +33,8 @@ const NEW = "清経国戸呉恋桜実舎栄関与摂蝉禅曽仏会当亀寝覚�
 const VARIANTS = Object.fromEntries([...OLD].map((c, i) => [c, [...NEW][i]]));
 function norm(s) {
   return (s || "").normalize("NFKC").replace(/./gu, c => VARIANTS[c] || c)
-    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s/g, "");
+    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s/g, "")
+    .replace(/づ/g, "ず").replace(/ぢ/g, "じ");   // 読みの「づ・ぢ」は「ず・じ」とも書くので同じ扱い
 }
 
 // 能柄の先頭（脇能・二番目〜五番目・別曲）を分類に使う
