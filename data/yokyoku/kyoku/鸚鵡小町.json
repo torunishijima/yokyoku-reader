@@ -1226,7 +1226,15 @@
     },
     {
      "type": "note",
-     "text": "とその樣を眞似て、〔序舞〕を舞ひ、"
+     "text": "とその樣を眞似て、"
+    },
+    {
+     "type": "narration",
+     "text": "〔序舞〕"
+    },
+    {
+     "type": "note",
+     "text": "を舞ひ、"
     },
     {
      "type": "speech",

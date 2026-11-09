@@ -481,8 +481,9 @@
      "text": "といつて、妻等を休ませ、從者はある人家を尋ねる態で、"
     },
     {
-     "type": "note",
-     "text": "從者「この里の人が誰か居られませうか」"
+     "type": "speech",
+     "speaker": "從者",
+     "text": "この里の人が誰か居られませうか"
     },
     {
      "type": "note",
@@ -510,7 +511,7 @@
     },
     {
      "type": "note",
-     "text": "といつて妻に向ひ、"
+     "text": "*といつて妻に向ひ、"
     },
     {
      "type": "speech",
@@ -706,8 +707,12 @@
    ],
    "tsushaku": [
     {
+     "type": "narration",
+     "text": "シテ日下左衞門、蘆を"
+    },
+    {
      "type": "note",
-     "text": "シテ日下左衞門、蘆を持つて登場。"
+     "text": "持つて登場。"
     },
     {
      "type": "speech",
@@ -725,15 +730,7 @@
     },
     {
      "type": "note",
-     "text": "といつて、思ひ切つた態で、"
-    },
-    {
-     "type": "narration",
-     "text": "〔カケリ〕"
-    },
-    {
-     "type": "note",
-     "text": "を舞ひ、"
+     "text": "といつて、思ひ切つた態で、〔カケリ〕を舞ひ、"
     },
     {
      "type": "speech",
@@ -2053,12 +2050,16 @@
      "text": "それでは、一寸舞ひませう"
     },
     {
-     "type": "note",
+     "type": "narration",
      "text": "と、今は昔の辛い思ひもなく、袖をかざして舞ふのである。"
     },
     {
+     "type": "narration",
+     "text": "〔男舞〕"
+    },
+    {
      "type": "note",
-     "text": "〔男舞〕を舞ひ"
+     "text": "を舞ひ"
     },
     {
      "type": "speech",

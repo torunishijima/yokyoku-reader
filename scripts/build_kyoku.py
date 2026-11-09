@@ -339,11 +339,11 @@ def parse_tsushaku(lines):
             m = re.match(r'^([^「『(（\s。、]{1,10})(\([^)）]{1,12}[)）])?[「『](.*)$', t, re.S)
             if t in ('前段', '後段'): items.append(dict(type='heading', text=t))
             elif re.fullmatch(r'[一二三四五六七八九〇十\d\s\-ー―・.*＊、,]+', t): pass   # 頁番号などのゴミ
-            elif m and not buf.get('small'):
+            elif m:   # 「名前「…」」の形は字の大きさに関係なく台詞
                 body = (m[2] or '') + m[3]
                 items.append(dict(type='speech', speaker=m[1], text=body[:-1] if body.endswith('」') and body.count('「') < body.count('」') else body))
             elif re.match(r'^[(（].*[)）]$', t, re.S): items.append(dict(type='gloss', text=t))
-            else: items.append(dict(type='note' if buf.get('small') else 'narration', text=t))
+            else: items.append(dict(type='note' if buf['nsmall'] * 2 > buf['n'] else 'narration', text=t))
         buf = None
     for page, l in lines:
         t = l['t']
@@ -352,9 +352,10 @@ def parse_tsushaku(lines):
         starts = bool(re.match(r'^[^「『(（\s。、]{1,10}(\([^)）]{1,12}[)）])?「', t)) or t[:1] in '(（' or t in ('前段', '後段')
         small = l.get('small', False)
         if buf is None or (depth == 0 and (starts or re.search(r'[。」)）]$', buf['text']) or small != buf['small'])) or t in ('前段', '後段'):
-            flush(); buf = dict(text=t, page=page, small=small)
+            flush(); buf = dict(text=t, page=page, small=small, n=0, nsmall=0)
         else:
             buf['text'] += t
+        buf['n'] += 1; buf['nsmall'] += small
         depth = max(0, depth + t.count('「') + t.count('(') + t.count('（') - t.count('」') - t.count(')') - t.count('）'))
         if buf['text'] in ('前段', '後段'): flush()
     flush()
@@ -405,16 +406,24 @@ def build(title):
     if fixes: apply_fixes(hb, fixes, log); apply_fixes(ts, fixes, log)
     dedupe(hb, log); dedupe(ts, log)
     classify(hb)
+    # 普通の字の行幅（曲全体の上側 1/4 の位置。小さい字ばかりの頁もあるので頁ごとには取らない）
+    ws_all = sorted(l['box'][2] - l['box'][0] for p in ts for l in p['lines'] if len(clean(l['t'])) >= 12)
+    wmed = ws_all[len(ws_all) * 3 // 4] if ws_all else 0
+    # 1 字あたりの縦の長さ（行の高さ÷字数）。普通の字は 41〜44px、小さい字は 32〜33px ほどで、行幅よりはっきり分かれる
+    def pitch(l):
+        n = len(re.sub(r'\s', '', clean(l['t']))); return (l['box'][3] - l['box'][1]) / n if n >= 5 else None
+    ps_all = sorted(pv for p in ts for l in p["lines"] if len(clean(l["t"])) >= 12 and (pv := pitch(l)))
+    pnorm = ps_all[len(ps_all) * 3 // 4] if ps_all else 0
     for p in ts:
-        # 通釈の地の文（所作・場面の説明）は小さい字で一段下げて印刷されている
+        # 通釈の地の文のうち、所作・場面の説明は小さい字で印刷されている
         tops = sorted(l['box'][1] for l in p['lines'])
         med = tops[len(tops) // 4] if tops else 0   # 小さい字の行が多い頁もあるので下側 1/4 の位置
-        ws = sorted(l['box'][2] - l['box'][0] for l in p['lines'] if len(clean(l['t'])) >= 12)
-        wmed = ws[len(ws) * 3 // 4] if ws else 0   # 普通の字の行幅（上側 1/4 の位置）
         for l in p['lines']:
             l['t'] = clean(l['t'])
             w = l['box'][2] - l['box'][0]
-            l['small'] = l['box'][1] > med + 35 or (len(l['t']) >= 6 and w < wmed * 0.8)
+            # 字の大きさは 1 字あたりの長さで見る。5 字未満の行だけ行幅で見る（普通の地の文も段落の頭を一字下げるので、字下げは補助）
+            pt = pitch(l)
+            l['small'] = pt < pnorm * 0.85 if pt else (w < wmed * 0.8 or (w < wmed * 0.9 and l['box'][1] > med + 35))
             if not l['t'] or re.fullmatch(r'[\d\s\-ー―・.]+', l['t']): l['kind'] = 'junk'
     extra = [dict(band=band, page=p['page'], x=l['x'], inner=m[1])
              for band, pages in (('honbun', hb), ('tsushaku', ts)) for p in pages for l in p['lines']
