@@ -30,4 +30,10 @@ index.html をファイルとして直接開くとデータを読み込めない
 本文の作り方（OCR）と確認の方法・範囲は [docs/taikan_ocr.md](docs/taikan_ocr.md)。
 OCR の確認には、半魚文庫「謡曲三百五十番集」の本文を照合用に使っている（このリポジトリには収録していない。[docs/hangyo.md](docs/hangyo.md)）。
 
+## ライセンス
+
+- **データと文書**（`data/yokyoku/`・`work/fixes/`・`docs/`）：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.ja)。自由に複製・改変・再配布できます（商用も可）。その際は「謡曲リーダー（西嶋徹）」と出典を示し、手を加えた場合はその旨を示してください。底本の『謡曲大観』自体はパブリックドメインです。
+- **プログラム**（`app.js`・`index.html`・`style.css`・`scripts/`）：MIT License（[LICENSE](LICENSE)）。
+- 本文には OCR の誤りが残っている可能性があります。正しさは保証しません。
+
 謡曲の本文には、人権に関わる用語が原本どおり含まれているものがあります。資料としての性格から原文のまま収録しています。

@@ -128,6 +128,12 @@
 | `build_index.py` | 曲の一覧を作る |
 | `fetch_yomi.py` | 曲名の読みを国立国会図書館サーチの書誌データから集める |
 
+## ライセンス
+
+このリーダーの本文・通釈・曲情報のデータと、この凡例は、[クリエイティブ・コモンズ 表示 4.0 国際（CC BY 4.0）](https://creativecommons.org/licenses/by/4.0/deed.ja)で公開しています。営利・非営利を問わず、自由に複製・改変・再配布できます。その際は「謡曲リーダー（西嶋徹）」と出典を示し、手を加えた場合はその旨を示してください。
+プログラムは MIT License です。データとプログラムは [GitHub のリポジトリ](https://github.com/torunishijima/yokyoku-reader)にあります。
+OCR の誤りが残っている可能性があり、正しさは保証しません。誤りに気づいた方は、GitHub の Issues などでお知らせいただけると助かります。
+
 ## 謝辞
 
 本文の確認には、[半魚文庫](https://hangyo.sakura.ne.jp/utahi/)「謡曲三百五十番集」（JALLC TANOMOSHI project No.1）の本文を照合用に使わせていただきました。このテキストがなければ、OCR の誤りを探す手がかりがほとんどなく、このリーダーは作れませんでした。
