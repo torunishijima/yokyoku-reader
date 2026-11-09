@@ -125,7 +125,6 @@ section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
 .u[data-role=アイ] { border-color: var(--ai); } .u[data-role=アイ] .sp { color: var(--ai); }
 .u[data-role=同吟] { border-color: var(--dougin); } .u[data-role=同吟] .sp { color: var(--dougin); }
 .u[data-role=その他] { border-color: var(--other); } .u[data-role=その他] .sp { color: var(--other); }
-.u.hidden { display: none; }
 
 .t { margin: 0 0 .7em; font-size: 1rem; }
 .t .sp { font-size: .75rem; font-weight: 600; color: var(--accent); margin-right: .5em; }

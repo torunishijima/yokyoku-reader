@@ -135,24 +135,12 @@ function tsuHTML(it) {
   return `<div class="t ${esc(it.type)}">${esc(it.text)}</div>`;
 }
 
-function roleFilterHTML(keys) {
-  if (keys.length < 2) return "";
-  return `<div class="tabs" role="group" aria-label="役で絞り込み">
-    <button class="chip" data-role-filter="" aria-pressed="true">全員</button>
-    ${keys.map(r => `<button class="chip" data-role-filter="${esc(r)}" aria-pressed="false">${esc(r)}</button>`).join("")}
-  </div>`;
-}
-
 async function renderKyoku(title) {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
   const all = await loadIndex();
   if (!all.find(x => x.title === title)) { app.innerHTML = `<p class="empty">曲が見つかりません。<a href="#/">一覧へ戻る</a></p>`; return; }
   const k = JSON.parse(await fetchText(DATA + "kyoku/" + encodeURIComponent(title) + ".json"));
   document.title = `${k.title}｜謡曲リーダー`;
-
-  const order = ["シテ", "ツレ", "ワキ", "ワキツレ", "地", "子方", "同吟", "アイ", "その他"];
-  const keys = [...new Set(k.dan.flatMap(d => d.honbun.filter(u => u.type === "u").map(u => roleKey(u.role))).filter(Boolean))]
-    .sort((a, b) => order.indexOf(a) - order.indexOf(b));
 
   app.innerHTML = `${BACK}
     <h1 class="kyoku">${esc(k.title)}</h1>
@@ -164,7 +152,6 @@ async function renderKyoku(title) {
           <button data-view="gen" aria-pressed="false">本文のみ</button>
           <button data-view="tsu" aria-pressed="false">通釈のみ</button>
         </div>
-        ${roleFilterHTML(keys)}
       </div>
     </div>
     <div id="body" data-view="both">
@@ -189,11 +176,6 @@ async function renderKyoku(title) {
   app.querySelectorAll("button[data-view]").forEach(b => b.addEventListener("click", () => {
     bodyEl.dataset.view = b.dataset.view;
     app.querySelectorAll("button[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
-  }));
-  app.querySelectorAll("[data-role-filter]").forEach(b => b.addEventListener("click", () => {
-    const r = b.dataset.roleFilter;
-    app.querySelectorAll("[data-role-filter]").forEach(x => x.setAttribute("aria-pressed", x === b));
-    app.querySelectorAll(".u").forEach(u => u.classList.toggle("hidden", !!r && u.dataset.role !== r));
   }));
   window.scrollTo(0, 0);
 }
