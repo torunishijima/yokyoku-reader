@@ -191,7 +191,8 @@ def find_bounds(pid, pages, log, extra=()):
     for page in pages:
         for l in raw_lines(pid, page):
             m = re.match(r'^＊?【([^】]{0,3})】', l['t'])
-            if m and m[1] not in ('能柄', '人物', '所', '時', '作者', '異稱', '梗槪', '梗概', '出典', '槪評', '概評', '物着', '序'):
+            if m and m[1] not in ('能柄', '人物', '所', '時', '作者', '異稱', '梗槪', '梗概', '出典', '槪評', '概評', '物着', '序') \
+                    and not re.match(r'^[^「『。、\s]{1,6}[「『]', l['t'][m.end():]):   # 〔考異〕の「【四】ワキ「…」は段の印ではない
                 marks.append(dict(l, page=page, inner=m[1], v=mark_value(m[1])))
     order = lambda m: (m['page'], -m['x'])
     cs = []
@@ -204,7 +205,8 @@ def find_bounds(pid, pages, log, extra=()):
             same_v = m['v'] is None or any(v is None or v == m['v'] for v in c['vals'])
             near = (pg == m['page'] and abs(x - m['x']) < 0.08) or \
                    (m['page'] == pg + 1 and x < 0.3 and m['x'] > 0.7)   # 頁の境目をまたいだ
-            if near and same_v or pg == m['page'] and abs(x - m['x']) < 0.04:
+            same_num = isinstance(m['v'], int) and m['v'] in c['vals']
+            if near and same_v or pg == m['page'] and (abs(x - m['x']) < 0.04 or same_num):   # 同じ頁で同じ番号なら位置が離れていても一つ
                 c['at'][m['band']] = (m['page'], m['x']); c['votes'].append(m['inner']); c['vals'].append(m['v']); continue
         cs.append(dict(at={m['band']: (m['page'], m['x'])}, votes=[m['inner']], vals=[m['v']]))
     for c in cs:   # 頭注の印は、位置が本文・通釈とそろうときだけ数に入れる
@@ -432,6 +434,11 @@ def build(title):
         hon = [dict(type='ai', pages=[d['page'], last])] if d['ai'] else parse_honbun(d['lines'], log, state)
         dan.append(dict(no=d['no'], label=d['label'], page=d['page'], ai=d['ai'],
                         honbun=hon, tsushaku=parse_tsushaku(t['lines'])))
+    for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い
+        h = sum(len(it.get('text', '')) for it in d['honbun'] if it['type'] == 'u')
+        t = sum(len(it.get('text', '')) for it in d['tsushaku'])
+        if not d['ai'] and h and t and not (0.5 <= t / h <= 6):
+            warn.append(f"【{d['label']}】の本文{h}字と通釈{t}字の分量が釣り合わない（段の区切りを確かめる）")
     # 「正」が空（欄外のゴミの削除）や（頁全体）の記録は、当たらなくても処理の中で消えている
     unapplied = [f for f in (fixes or []) if f['ocr'] and f['fixed'] and not f['ocr'].startswith('（') and not f.get('applied')]
     for f in unapplied: warn.append(f"訂正を当てられなかった: p{f['page']} {f['ocr']}→{f['fixed']}")

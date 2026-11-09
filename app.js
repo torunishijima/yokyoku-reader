@@ -15,7 +15,7 @@ function esc(s) {
 
 async function fetchText(path) {
   if (cache.has(path)) return cache.get(path);
-  const res = await fetch(path);
+  const res = await fetch(path, { cache: "no-cache" });   // データを更新したとき古いものが残らないよう、毎回サーバーに確かめる
   if (!res.ok) throw new Error(`${path} を読み込めませんでした（${res.status}）`);
   const text = await res.text();
   cache.set(path, text);
