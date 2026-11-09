@@ -27,10 +27,13 @@ async function loadIndex() {
   return index;
 }
 
-// 検索用に旧字・異体字をそろえる（表示は底本のまま）
-const VARIANTS = { "龍": "竜", "經": "経", "淸": "清", "戀": "恋", "櫻": "桜", "鐵": "鉄", "國": "国", "實": "実", "與": "与", "鬪": "闘", "髙": "高", "辨": "弁", "戶": "戸", "鸚": "鸚", "蘆": "芦" };
+// 検索用に旧字を新字にそろえ、カタカナをひらがなにする（表示は底本のまま）。旧字の表は scripts/collate.py と同じ
+const OLD = "淸經國戶吳戀櫻實舍榮關與攝蟬禪曾佛會當龜寢覺樂辨卷萬靜蟲瀨顏賴藏繪鹽郞鐵檜歸髮黑淚亂聲戰鬪靈臺雜遲從將豐兩稱德氣變處數樣續總壽傳圓廣應來祕彌竝隱澤劍姬譽餘覽讀戲驛醫鄕寬邊龍惠圖眞淺壞祿顯團獨單參澁滿舊殘晝狀盡壯專惱擔斷學擧譯聽觀權勸歡齒體髓證據變戀亞惡壓圍爲醉碎濕雙發廢拜賣倂竊竝稻蘆蠶顯勞營螢榮僞謠拔劒卽嚴獸歲靑淨繩虛黃收莊衞遙屆拂擊彈價假冰狹濱渴禮缺盃廳聽鷄雞擴據擇澤鬭畫晉峯嶋埀乘剩擔錢鑄醬鹽奧壹貳參拾鸚";
+const NEW = "清経国戸呉恋桜実舎栄関与摂蝉禅曽仏会当亀寝覚楽弁巻万静虫瀬顔頼蔵絵塩郎鉄桧帰髪黒涙乱声戦闘霊台雑遅従将豊両称徳気変処数様続総寿伝円広応来秘弥並隠沢剣姫誉余覧読戯駅医郷寛辺竜恵図真浅壊禄顕団独単参渋満旧残昼状尽壮専悩担断学挙訳聴観権勧歓歯体髄証拠変恋亜悪圧囲為酔砕湿双発廃拝売併窃並稲芦蚕顕労営蛍栄偽謡抜剣即厳獣歳青浄縄虚黄収荘衛遥届払撃弾価仮氷狭浜渇礼欠杯庁聴鶏鶏拡拠択沢闘画晋峰島垂乗剰担銭鋳醤塩奥壱弐参拾鸚";
+const VARIANTS = Object.fromEntries([...OLD].map((c, i) => [c, [...NEW][i]]));
 function norm(s) {
-  return (s || "").replace(/./g, c => VARIANTS[c] || c);
+  return (s || "").normalize("NFKC").replace(/./gu, c => VARIANTS[c] || c)
+    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s/g, "");
 }
 
 // 能柄の先頭（脇能・二番目〜五番目・別曲）を分類に使う
@@ -68,7 +71,7 @@ async function renderList() {
 
   app.innerHTML = `
     <div class="controls">
-      <input type="search" id="q" placeholder="曲名で検索" value="${esc(listState.q)}" aria-label="曲名で検索">
+      <input type="search" id="q" placeholder="曲名・読みで検索（例：清経、きよつね）" value="${esc(listState.q)}" aria-label="曲名で検索">
       ${groups.length > 1 ? `<div class="tabs" role="group" aria-label="能柄">
         ${["", ...groups].map(g => `<button data-g="${esc(g)}" aria-pressed="${listState.nougara === g}">${esc(g || "すべて")}</button>`).join("")}
       </div>` : ""}
@@ -82,7 +85,7 @@ async function renderList() {
   function update() {
     const q = norm(listState.q.trim());
     const rows = all.filter(r =>
-      (!q || norm(r.title).includes(q)) &&
+      (!q || norm(r.title).includes(q) || norm(r.yomi).includes(q)) &&
       (!listState.nougara || nougaraGroup(r.nougara) === listState.nougara));
     countEl.textContent = `${rows.length}曲を表示（本文の確認が済んだ${all.length}曲を収録。謡曲大観の全282曲から順次追加）`;
     listEl.innerHTML = rows.length ? rows.map(r => `

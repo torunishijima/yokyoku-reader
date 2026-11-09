@@ -17,12 +17,17 @@ for x in toc:
     info = d.get("info", {})
     index.append({
         "title": d["title"],
+        "yomi": x.get("yomi", ""),
         "volume": d["volume"],
         "pages": d["pages"],
         "nougara": info.get("能柄", ""),
         "toki": info.get("時", ""),
         "check": d["check"]["status"],
     })
+
+missing = [r["title"] for r in index if not r["yomi"]]
+if missing:
+    print("読み仮名がない曲（taikan_toc.json の yomi に足す）:", " ".join(missing))
 
 out = YK / "index.json"
 out.write_text(json.dumps(index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
