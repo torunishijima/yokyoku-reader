@@ -200,6 +200,9 @@ def find_bounds(pid, pages, log, extra=()):
         c = cs[-1] if cs else None
         if c and m['band'] in c['at'] and c['at'][m['band']] [0] == m['page'] and abs(c['at'][m['band']][1] - m['x']) < 0.01:
             continue   # 同じ印を二重に読んだもの
+        if c and m['band'] in c['at'] and c['at'][m['band']][0] + 1 == m['page'] and m['page'] % 2 and \
+                c['at'][m['band']][1] < 0.06 and m['x'] > 0.9 and (m['v'] is None or m['v'] in c['vals'] or None in c['vals']):
+            c['at'][m['band']] = (m['page'], m['x']); continue   # 見開きの継ぎ目の印を、重ねて切った左右の頁の両方から読んだもの（蟻通【五】）
         if c and m['band'] not in c['at']:
             pg, x = next(iter(c['at'].values()))
             same_v = m['v'] is None or any(v is None or v == m['v'] for v in c['vals'])
@@ -431,6 +434,8 @@ def read_info(x):
     # 読み誤った印をそろえる（「時〕」→【時】、「者】」「[者】」→【作者】）
     txt = re.sub(r'[【\[〔]?時[〕\]】]', '【時】', txt)
     txt = re.sub(r'(?:【作|[\[〔(]|作)?者】', '【作者】', txt)
+    # 梗概の 1 行目が見出しより前に読まれることがある（船辨慶・大蛇）。文の途中で切れた行が見出しの直前にあれば梗概の頭へ戻す
+    txt = re.sub(r'\n([^\n【】]*[^\n【】。」）)\s])\n(【梗[槪概]】)\n', r'\n\2\n\1', txt)
     parts = re.split(r'【([^】]{0,4})】', txt)
     for k, v in zip(parts[1::2], parts[2::2]):
         k = '梗概' if k in ('梗槪', '梗概') else k
@@ -498,7 +503,12 @@ def build(title):
             ai = hon[-1]
             ai['items'] = extract_ai(x['pid'], tuple(ai['start']), nxt, last_page, log)
             ai['pages'] = [ai['start'][0], nxt[0] if nxt else last_page]
-            if not ai['items']: warn.append(f"【{d['label']}】の間狂言を取り出せなかった")
+            if not ai['items']:
+                # 中入の後に散文（間狂言の組み方）が一行もなければ、間狂言のない中入（藍染川の入水など）
+                if any(l['band'] == 'prose' for pg in range(ai['pages'][0], ai['pages'][1] + 1) for l in raw_lines(x['pid'], pg)):
+                    warn.append(f"【{d['label']}】の間狂言を取り出せなかった")
+                else:
+                    hon.pop(); log.append(dict(page=ai['start'][0], kind='間狂言', ocr='中入の後に散文なし', fixed='間狂言の欄を出さない'))
         dan.append(dict(no=d['no'], label=d['label'], page=d['page'], ai=d['ai'],
                         honbun=hon, tsushaku=parse_tsushaku(t['lines'])))
     for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い

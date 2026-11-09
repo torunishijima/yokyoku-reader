@@ -51,7 +51,8 @@
   "frame": 52,
   "frame_end": 58,
   "hangyo_file": "yo120.txt",
-  "hangyo_title": "飛鳥川"
+  "hangyo_title": "飛鳥川",
+  "yomi": "あすかがわ"
  },
  {
   "title": "安宅",
@@ -72,7 +73,8 @@
   "frame": 72,
   "frame_end": 81,
   "hangyo_file": "yo236.txt",
-  "hangyo_title": "安達原(観世流以外にては黒塚といふ)"
+  "hangyo_title": "安達原(観世流以外にては黒塚といふ)",
+  "yomi": "あだちがはら"
  },
  {
   "title": "敦盛",
@@ -93,7 +95,8 @@
   "frame": 89,
   "frame_end": 97,
   "hangyo_file": "yo005.txt",
-  "hangyo_title": "淡路"
+  "hangyo_title": "淡路",
+  "yomi": "あわじ"
  },
  {
   "title": "葵上",
@@ -114,7 +117,8 @@
   "frame": 104,
   "frame_end": 114,
   "hangyo_file": "yo246.txt",
-  "hangyo_title": "海士"
+  "hangyo_title": "海士",
+  "yomi": "あま"
  },
  {
   "title": "綾鼓",
@@ -124,7 +128,8 @@
   "frame": 114,
   "frame_end": 120,
   "hangyo_file": "yo145.txt",
-  "hangyo_title": "綾鼓"
+  "hangyo_title": "綾鼓",
+  "yomi": "あやのつづみ"
  },
  {
   "title": "嵐山",
@@ -134,7 +139,8 @@
   "frame": 120,
   "frame_end": 126,
   "hangyo_file": "yo034.txt",
-  "hangyo_title": "嵐山"
+  "hangyo_title": "嵐山",
+  "yomi": "あらしやま"
  },
  {
   "title": "蟻通",
@@ -144,7 +150,8 @@
   "frame": 126,
   "frame_end": 132,
   "hangyo_file": "yo180.txt",
-  "hangyo_title": "蟻通"
+  "hangyo_title": "蟻通",
+  "yomi": "ありどおし"
  },
  {
   "title": "藍染川",
@@ -154,7 +161,8 @@
   "frame": 132,
   "frame_end": 143,
   "hangyo_file": "yo131.txt",
-  "hangyo_title": "藍染川"
+  "hangyo_title": "藍染川",
+  "yomi": "あいそめがわ"
  },
  {
   "title": "碇潜",
@@ -164,7 +172,8 @@
   "frame": 143,
   "frame_end": 151,
   "hangyo_file": "yo239.txt",
-  "hangyo_title": "碇潜"
+  "hangyo_title": "碇潜",
+  "yomi": "いかりかづき"
  },
  {
   "title": "生田敦盛",
@@ -174,7 +183,8 @@
   "frame": 151,
   "frame_end": 157,
   "hangyo_file": "yo059.txt",
-  "hangyo_title": "生田敦盛(金春流にては生田といふ)"
+  "hangyo_title": "生田敦盛(金春流にては生田といふ)",
+  "yomi": "いくたあつもり"
  },
  {
   "title": "一角仙人",
