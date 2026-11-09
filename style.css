@@ -48,7 +48,10 @@ body {
 }
 a { color: var(--accent); }
 header.site, main, footer.site { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-header.site { padding-top: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+header.site { padding-top: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+nav.menu { display: flex; gap: 16px; font-size: .85rem; }
+nav.menu a { color: var(--muted); text-decoration: none; }
+nav.menu a:hover { color: var(--accent); }
 .brand { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; color: var(--text); text-decoration: none; letter-spacing: .1em; }
 footer.site { margin-top: 48px; padding-top: 16px; padding-bottom: 32px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
 footer.site p { margin: .2em 0; }
@@ -82,7 +85,14 @@ ul.list a:hover { border-color: var(--accent); }
 .empty { color: var(--muted); padding: 24px 0; }
 
 /* 詳細 */
-.back { display: inline-block; margin: 16px 0 4px; font-size: .9rem; }
+.back { display: inline-block; margin: 16px 0 8px; padding: 6px 14px; font-size: .9rem; color: var(--text); text-decoration: none;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.back:hover { border-color: var(--accent); color: var(--accent); }
+.summary { margin: 0 0 16px; font-size: .92rem; max-width: 760px; }
+.summary h2 { font-size: .8rem; color: var(--muted); font-weight: normal; margin: 0 0 2px; }
+.summary p { margin: 0; }
+.source { font-size: .82rem; color: var(--muted); margin-top: 24px; padding-top: 12px; }
+.source p { margin: 0 0 .5em; }
 h1.kyoku { font-family: var(--serif); font-size: 2rem; margin: 4px 0 8px; letter-spacing: .1em; }
 dl.meta { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .9rem; margin: 0 0 12px; }
 dl.meta dt { color: var(--muted); }
@@ -130,9 +140,6 @@ section.dan { border-bottom: 1px solid var(--line); padding: 16px 0; }
 .col-gen .note { font-size: .82rem; color: var(--muted); margin: 0 0 .7em; padding-left: 13px; }
 .col-gen .ai { font-size: .85rem; color: var(--muted); margin: 0 0 .7em; padding: 6px 10px; border: 1px dashed var(--line); border-radius: 6px; }
 .u .dir { font-family: var(--sans); font-size: .75rem; color: var(--muted); margin: 0 .15em; }
-details.summary { font-size: .9rem; margin: 0 0 12px; }
-details.summary summary { cursor: pointer; color: var(--muted); }
-details.summary p { margin: .4em 0 0; }
 .loading { color: var(--muted); padding: 24px 0; }
 
 /* 説明ページ */

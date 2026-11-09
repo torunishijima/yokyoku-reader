@@ -103,12 +103,14 @@ async function renderList() {
 
 /* ---------- 詳細画面 ---------- */
 
+const BACK = `<a href="#/" class="back">← 曲の一覧に戻る</a>`;
+
 function infoBlock(k) {
   const i = k.info || {};
   const rows = [["能柄", i.能柄], ["人物", i.人物], ["所", i.所], ["時", i.時], ["流派", i.流派]].filter(([, v]) => v);
   return `
     <dl class="meta">${rows.map(([t, v]) => `<dt>${t}</dt><dd>${esc(v).replace(/\n/g, "<br>")}</dd>`).join("")}</dl>
-    ${i.梗概 ? `<details class="summary"><summary>梗概</summary><p>${esc(i.梗概)}</p></details>` : ""}`;
+    ${i.梗概 ? `<div class="summary"><h2>梗概</h2><p>${esc(i.梗概)}</p></div>` : ""}`;
 }
 
 // 本文中の（ト書き）を小さく
@@ -152,12 +154,9 @@ async function renderKyoku(title) {
   const keys = [...new Set(k.dan.flatMap(d => d.honbun.filter(u => u.type === "u").map(u => roleKey(u.role))).filter(Boolean))]
     .sort((a, b) => order.indexOf(a) - order.indexOf(b));
 
-  app.innerHTML = `<a href="#/" class="back">← 一覧へ</a>
+  app.innerHTML = `${BACK}
     <h1 class="kyoku">${esc(k.title)}</h1>
     ${infoBlock(k)}
-    <p class="notice">本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR で文字に起こしたものです。
-      本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました（訂正 ${k.check.fixes} 件）。ト書き・通釈・曲情報は OCR のままで、誤りが残っています。
-      各段の「原本」から国立国会図書館の画像で確かめられます。<a href="#/about">作り方と確認の範囲</a></p>
     <div class="toolbar">
       <div class="row">
         <div class="tabs" role="group" aria-label="表示">
@@ -178,8 +177,13 @@ async function renderKyoku(title) {
           </div>
         </section>`).join("")}
     </div>
-    <p class="count">出典：佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院、パブリックドメイン）、<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>。
-      文字起こし：NDLOCR-Lite（国立国会図書館、CC BY 4.0）。話者の色分けは役名からの推定です。</p>`;
+    <div class="source">
+      <p>本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR（NDLOCR-Lite）で文字に起こしたものです。
+        本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました（訂正 ${k.check.fixes} 件）。ト書き・通釈・曲情報は OCR のままで、誤りが残っています。
+        各段の「原本」から<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>の画像で確かめられます。話者の色分けは役名からの推定です。</p>
+      <p><a href="#/about">本文の作り方と確認の範囲</a></p>
+    </div>
+    ${BACK}`;
 
   const bodyEl = document.getElementById("body");
   app.querySelectorAll("button[data-view]").forEach(b => b.addEventListener("click", () => {
@@ -240,7 +244,7 @@ async function renderAbout() {
   app.innerHTML = `<p class="loading">読み込み中…</p>`;
   const src = await fetchText("docs/taikan_ocr.md");
   document.title = "本文の作り方と確認の方法｜謡曲リーダー";
-  app.innerHTML = `<a href="#/" class="back">← 一覧へ</a><article class="doc">${md(src)}</article>`;
+  app.innerHTML = `${BACK}<article class="doc">${md(src)}</article>${BACK}`;
   window.scrollTo(0, 0);
 }
 
