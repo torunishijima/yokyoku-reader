@@ -125,7 +125,7 @@ function honbunHTML(it, k) {
     const [a, b] = it.pages;
     const link = `<a href="${esc(ndlLink(k, a))}" target="_blank" rel="noopener">原本 ${a}${b !== a ? "–" + b : ""}頁 ↗</a>`;
     if (!it.items?.length) return `<p class="ai-head">間狂言（このサイトには未収録。${link}）</p>`;
-    return `<div class="ai"><p class="ai-head"><span>間狂言</span>OCR のままで、原本との確認をしていません。${link}</p>${it.items.map(x => honbunHTML(x, k)).join("")}</div>`;
+    return `<div class="ai"><p class="ai-head"><span>間狂言</span>${link}</p>${it.items.map(x => honbunHTML(x, k)).join("")}</div>`;
   }
   const label = [it.role, it.shodan].filter(Boolean).join(" ");
   return `<p class="u" data-role="${esc(roleKey(it.role || it.role_cont))}">${label ? `<span class="sp">${esc(label)}</span>` : ""}${it.paren ? `<span class="dir">${esc(it.paren)}</span>` : ""}${dirs(it.text)}</p>`;
@@ -168,7 +168,7 @@ async function renderKyoku(title) {
     </div>
     <div class="source">
       <p>本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR（NDLOCR-Lite）で文字に起こしたものです。
-        本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました（訂正 ${k.check.fixes} 件）。ト書き・通釈・曲情報は OCR のままで、誤りが残っています。
+        本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました（訂正 ${k.check.fixes} 件）。ト書き・通釈・曲情報・間狂言は OCR のままで、誤りが残っています。
         各段の「原本」から<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>の画像で確かめられます。話者の色分けは役名からの推定です。</p>
       <p><a href="#/about">本文の作り方と確認の範囲</a></p>
     </div>
