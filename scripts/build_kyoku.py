@@ -9,7 +9,7 @@
 3. 本文とト書きを、行の上端の位置で分ける（ト書きは一段下げて印刷されている）
 4. 段の印【一】【二】…で本文・通釈を段に分ける（崩れた印は番号の並びで補う）
 5. 役名の読み誤りを直す（ッキ→ワキ など。直したものは記録に残す）
-6. 解説の頁から曲情報（能柄・人物・所・時・梗概）を取る
+6. 解説の頁から曲情報（能柄・人物・所・時・梗概）を取り、解説の頁の訂正を当てる
 """
 import json, re, sys, difflib, unicodedata
 from pathlib import Path
@@ -463,6 +463,17 @@ def read_info(x):
         if m: info['能柄'] = m[1]
     return info
 
+SUMMARY_MARK = '（梗概）'   # 訂正記録のこの行が「梗概を原本の画像と全文照合済み」の印（docs/ocr_check.md）
+def apply_info_fixes(x, info, fixes, log):
+    """解説の頁（曲の最初の 3 頁）の訂正を曲情報に当てる。本文・通釈に当たらなかったものだけ"""
+    for fx in fixes:
+        if fx.get('applied') or not fx['ocr'] or fx['ocr'].startswith('（') or not (x['page'] <= fx['page'] <= x['page'] + 2): continue
+        for k in ('梗概', '人物', '能柄', '所', '時', '流派'):
+            if fx['ocr'] in info.get(k, ''):
+                info[k] = info[k].replace(fx['ocr'], fx['fixed'], 1); fx['applied'] = True
+                log.append(dict(page=fx['page'], kind='曲情報', ocr=fx['ocr'], fixed=fx['fixed']))
+                break
+
 # ---------- 組み立て ----------
 def build(title):
     x = next(r for r in toc if r['title'] == title)
@@ -536,6 +547,8 @@ def build(title):
         t = sum(len(it.get('text', '')) for it in d['tsushaku'])
         if not d['ai'] and h and t and not (0.5 <= t / h <= 6):
             warn.append(f"【{d['label']}】の本文{h}字と通釈{t}字の分量が釣り合わない（段の区切りを確かめる）")
+    info = read_info(x)
+    if fixes: apply_info_fixes(x, info, fixes, log)
     # 「正」が空（欄外のゴミの削除）や（頁全体）の記録は、当たらなくても処理の中で消えている
     unapplied = [f for f in (fixes or []) if f['ocr'] and f['fixed'] and not f['ocr'].startswith('（') and not f.get('applied')]
     for f in unapplied: warn.append(f"訂正を当てられなかった: p{f['page']} {f['ocr']}→{f['fixed']}")
@@ -544,8 +557,9 @@ def build(title):
         title=title, volume=x['volume'], pid=x['pid'], start_page=x['page'],
         pages=[pages[0], pages[-1]] if pages else [],
         ndl_url=f"https://dl.ndl.go.jp/pid/{x['pid']}", frame_base=base[x['pid']],
-        info=read_info(x),
-        check=dict(status='確認済み' if fixes is not None else '未確認', fixes=sum(1 for f in fixes or [] if f['ocr'] != f['fixed'])),
+        info=info,
+        check=dict(status='確認済み' if fixes is not None else '未確認', fixes=sum(1 for f in fixes or [] if f['ocr'] != f['fixed']),
+                   summary='確認済み' if any(f['ocr'] == SUMMARY_MARK for f in fixes or []) else '未確認'),
         dan=dan, log=log, warn=warn)
     (OUT / f'{title}.json').write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
     return out

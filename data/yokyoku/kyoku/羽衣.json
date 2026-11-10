@@ -19,7 +19,8 @@
  },
  "check": {
   "status": "確認済み",
-  "fixes": 5
+  "fixes": 5,
+  "summary": "未確認"
  },
  "dan": [
   {
