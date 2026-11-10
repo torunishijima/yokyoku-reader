@@ -112,11 +112,11 @@ const BACK = `<a href="#/" class="back">← 曲の一覧に戻る</a>`;
 function infoBlock(k) {
   const i = k.info || {};
   const rows = [["能柄", i.能柄], ["人物", i.人物], ["所", i.所], ["時", i.時], ["流派", i.流派]].filter(([, v]) => v);
-  // 曲情報・梗概は解説の頁（曲の最初の頁とその次）の OCR のまま。原本の画像で確かめられるようにする
+  // 曲情報・梗概は解説の頁（曲の最初の頁とその次）の OCR から。梗概は原本と照合した曲だけ「照合済み」。原本の画像で確かめられるようにする
   const src = `<p class="meta-src"><a href="${esc(ndlLink(k, k.start_page))}" target="_blank" rel="noopener">解説の原本 ${k.start_page}頁 ↗</a></p>`;
   return `
     <dl class="meta">${rows.map(([t, v]) => `<dt>${t}</dt><dd>${esc(v).replace(/\n/g, "<br>")}</dd>`).join("")}</dl>
-    ${i.梗概 ? `<div class="summary"><h2>梗概</h2><p>${esc(i.梗概)}</p></div>` : ""}
+    ${i.梗概 ? `<div class="summary"><h2>梗概${k.check?.summary === "確認済み" ? "（原本と照合済み）" : "（未検証）"}</h2><p>${esc(i.梗概)}</p></div>` : ""}
     ${src}`;
 }
 
@@ -175,7 +175,7 @@ async function renderKyoku(title) {
     </div>
     <div class="source">
       <p>本文と通釈は、佐成謙太郎『謡曲大観』${esc(k.volume)}（明治書院 1930–31）${k.pages[0]}–${k.pages[1]}頁の印刷面を、OCR（NDLOCR-Lite）で文字に起こしたものです。
-        本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました。ト書き・通釈・曲情報・間狂言は OCR のままで、誤りが残っている可能性があります。
+        本文（謡の詞章）は、別の版と照らし合わせて食い違った箇所を原本の画像で確かめました。ト書き・通釈・曲情報・間狂言は OCR のまま（梗概は「照合済み」と示した曲だけ原本と照合）で、誤りが残っている可能性があります。
         各段や曲情報の下の「原本」から<a href="${esc(k.ndl_url)}" target="_blank" rel="noopener">国立国会図書館デジタルコレクション</a>の画像で確かめられます。話者の色分けは役名からの推定です。</p>
       <p><a href="#/about">凡例</a></p>
     </div>

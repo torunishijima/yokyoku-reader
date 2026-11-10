@@ -19,6 +19,7 @@ index.html をファイルとして直接開くとデータを読み込めない
 
 1. `python3 scripts/build_kyoku.py <曲名>` で `data/yokyoku/kyoku/<曲名>.json` を作る（曲名を省くと確認済みの全曲）
 2. `python3 scripts/build_index.py` で一覧データ `data/yokyoku/index.json` を作り直す
+3. `python3 scripts/info_check.py <曲名>` で梗概・人物・通釈の誤りの疑いを拾い、原本で確かめる。梗概を原本と全文照合するまで公開しない（[docs/ocr_check.md](docs/ocr_check.md) の「曲情報・通釈の確認」）
 
 ## データと権利
 
