@@ -478,7 +478,8 @@ def apply_item_patches(title, dan, log, warn):
     """work/fixes/<曲>.items.json の差し替えを、組み立てた段に当てる。
     OCR が行ごと読み落とした・崩れた所など、字の訂正（tsv）では直せないものに使う。
     [{"page": 頁, "dan": 段の番号, "band": "honbun"|"tsushaku", "find": その発言にある文字列（1 か所だけ）,
-      "set": {置き換える欄}, "after": [後ろに足す発言], "note": 理由}]"""
+      "set": {置き換える欄}, "item": {発言ごと置き換え}, "delete": true（読み取りの崩れだけの行を除く）,
+      "after": [後ろに足す発言], "note": 理由}]"""
     f = FIX / f'{title}.items.json'
     if not f.exists(): return
     for p in json.loads(f.read_text(encoding='utf-8')):
@@ -488,8 +489,10 @@ def apply_item_patches(title, dan, log, warn):
         if len(hits) != 1:
             warn.append(f"差し替えを当てられなかった: 【{p['dan']}】{p['band']} {p['find']}（{len(hits)} か所）"); continue
         i = hits[0]
+        if 'item' in p: items[i] = dict(p['item'])
         items[i].update(p.get('set', {}))
         items[i + 1:i + 1] = [dict(x) for x in p.get('after', [])]
+        if p.get('delete'): del items[i]
         log.append(dict(page=p['page'], kind='差し替え', ocr=p['find'], fixed=p.get('note', '')))
 
 # ---------- 組み立て ----------
