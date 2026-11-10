@@ -474,6 +474,24 @@ def apply_info_fixes(x, info, fixes, log):
                 log.append(dict(page=fx['page'], kind='曲情報', ocr=fx['ocr'], fixed=fx['fixed']))
                 break
 
+def apply_item_patches(title, dan, log, warn):
+    """work/fixes/<曲>.items.json の差し替えを、組み立てた段に当てる。
+    OCR が行ごと読み落とした・崩れた所など、字の訂正（tsv）では直せないものに使う。
+    [{"page": 頁, "dan": 段の番号, "band": "honbun"|"tsushaku", "find": その発言にある文字列（1 か所だけ）,
+      "set": {置き換える欄}, "after": [後ろに足す発言], "note": 理由}]"""
+    f = FIX / f'{title}.items.json'
+    if not f.exists(): return
+    for p in json.loads(f.read_text(encoding='utf-8')):
+        d = next((x for x in dan if x['no'] == p['dan']), None)
+        items = d[p['band']] if d else []
+        hits = [i for i, it in enumerate(items) if p['find'] in it.get('text', '')]
+        if len(hits) != 1:
+            warn.append(f"差し替えを当てられなかった: 【{p['dan']}】{p['band']} {p['find']}（{len(hits)} か所）"); continue
+        i = hits[0]
+        items[i].update(p.get('set', {}))
+        items[i + 1:i + 1] = [dict(x) for x in p.get('after', [])]
+        log.append(dict(page=p['page'], kind='差し替え', ocr=p['find'], fixed=p.get('note', '')))
+
 # ---------- 組み立て ----------
 def build(title):
     x = next(r for r in toc if r['title'] == title)
@@ -542,6 +560,7 @@ def build(title):
         d['tsushaku'] = [t for j, t in enumerate(ts_) if not (t['type'] == 'heading' and j and ts_[j - 1] == t)]
         while i + 1 < len(dan) and d['tsushaku'] and d['tsushaku'][-1]['type'] == 'heading':
             dan[i + 1]['tsushaku'].insert(0, d['tsushaku'].pop())
+    apply_item_patches(title, dan, log, warn)
     for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い
         h = sum(len(it.get('text', '')) for it in d['honbun'] if it['type'] == 'u')
         t = sum(len(it.get('text', '')) for it in d['tsushaku'])

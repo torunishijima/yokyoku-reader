@@ -89,6 +89,17 @@ def check(d):
         if len(v) == 1 and len(sp) > 1:
             near = [o for o in sp if o != k and len(o) == len(k) and sum(a != b for a, b in zip(o, k)) == 1]
             if near: flags.append(('通釈の話し手', k, f'1 回だけの話し手名。近い名前「{"・".join(near)}」がある（p{v[0]}）'))
+    # 読み取りの崩れ: 半角の括弧・数字・記号が続く（罫やルビを読んだもの。隅田川 p1525）
+    for dan in d['dan']:
+        for band, name in (('honbun', '本文'), ('tsushaku', '通釈')):
+            for it in dan[band]:
+                for m in re.finditer(r'(?:[()\-\d|]\s*){4,}', it.get('text', '')):
+                    flags.append((name, m[0].strip()[:30], f'読み取りの崩れ（半角の記号・数字が続く。【{dan["label"]}】p{dan["page"]}〜）'))
+            # 役名が前の発言に混ざっている: ト書きの閉じ括弧・句点の直後に役名（鉤括弧の読み落とし。隅田川 p1532）
+            if band == 'honbun':
+                for it in (x for x in dan[band] if x['type'] == 'u'):
+                    for m in re.finditer(r'[)）。](?:(?:シテ|ワキ|ツレ|ワキヅレ|子方|狂言)(?![「『ノ])|地(?=上歌|下歌|クセ|クリ|サシ|ロンギ|次第|一セイ|キリ|ノリ地)(?:上歌|下歌|クセ|クリ|サシ|ロンギ|次第|一セイ|キリ|ノリ地)(?![「『]))(.{0,6})', it.get('text', '')):
+                        flags.append(('本文', m[0], f'役名が発言の途中にある（鉤括弧の読み落とし、またはト書きの混入。p{it.get("page", dan["page"])}）'))
     return flags
 
 if __name__ == '__main__':
