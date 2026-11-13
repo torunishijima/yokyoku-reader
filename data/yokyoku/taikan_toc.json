@@ -194,7 +194,8 @@
   "frame": 157,
   "frame_end": 162,
   "hangyo_file": "yo242.txt",
-  "hangyo_title": "一角仙人"
+  "hangyo_title": "一角仙人",
+  "yomi": "いっかくせんにん"
  },
  {
   "title": "岩船",
@@ -204,7 +205,8 @@
   "frame": 162,
   "frame_end": 168,
   "hangyo_file": "yo036.txt",
-  "hangyo_title": "岩船"
+  "hangyo_title": "岩船",
+  "yomi": "いわふね"
  },
  {
   "title": "鵜飼",
@@ -214,7 +216,8 @@
   "frame": 168,
   "frame_end": 176,
   "hangyo_file": "yo204.txt",
-  "hangyo_title": "鵜飼"
+  "hangyo_title": "鵜飼",
+  "yomi": "うかい"
  },
  {
   "title": "浮舟",
@@ -224,7 +227,8 @@
   "frame": 176,
   "frame_end": 183,
   "hangyo_file": "yo112.txt",
-  "hangyo_title": "浮舟"
+  "hangyo_title": "浮舟",
+  "yomi": "うきふね"
  },
  {
   "title": "雨月",
@@ -234,7 +238,8 @@
   "frame": 183,
   "frame_end": 189,
   "hangyo_file": "yo150.txt",
-  "hangyo_title": "雨月"
+  "hangyo_title": "雨月",
+  "yomi": "うげつ"
  },
  {
   "title": "右近",
@@ -244,7 +249,8 @@
   "frame": 189,
   "frame_end": 196,
   "hangyo_file": "yo040.txt",
-  "hangyo_title": "右近"
+  "hangyo_title": "右近",
+  "yomi": "うこん"
  },
  {
   "title": "歌占",
@@ -254,7 +260,8 @@
   "frame": 196,
   "frame_end": 205,
   "hangyo_file": "yo179.txt",
-  "hangyo_title": "歌占"
+  "hangyo_title": "歌占",
+  "yomi": "うたうら"
  },
  {
   "title": "内外詣",
@@ -264,7 +271,8 @@
   "frame": 205,
   "frame_end": 210,
   "hangyo_file": "yo043.txt",
-  "hangyo_title": "内外詣"
+  "hangyo_title": "内外詣",
+  "yomi": "うちともうで"
  },
  {
   "title": "善知鳥",
@@ -274,7 +282,8 @@
   "frame": 210,
   "frame_end": 217,
   "hangyo_file": "yo139.txt",
-  "hangyo_title": "善知鳥"
+  "hangyo_title": "善知鳥",
+  "yomi": "うとう"
  },
  {
   "title": "采女",
@@ -284,7 +293,8 @@
   "frame": 217,
   "frame_end": 225,
   "hangyo_file": "yo065.txt",
-  "hangyo_title": "采女"
+  "hangyo_title": "采女",
+  "yomi": "うねめ"
  },
  {
   "title": "鵜祭",
