@@ -25,7 +25,7 @@ def role_key(label, prev=''):
     """役名 → 区分（シテ・ツレ・ワキ・ワキツレ・地・子方・アイ・同吟）。小段名だけなら直前の区分"""
     if not label: return prev
     if '・' in label or re.search(r'二人|三人|同吟|^同', label): return '同吟'
-    if re.match(r'^(後|前)?(シテツレ|ツレ|トモ)', label): return 'ツレ'
+    if re.match(r'^(後|前)?(シテツレ|シテヅレ|ツレ|トモ)', label): return 'ツレ'
     if re.match(r'^(後|前)?[シジ]テ', label): return 'シテ'
     if re.match(r'^ワキ[ヅツ]レ', label): return 'ワキツレ'
     if re.match(r'^ワキ', label): return 'ワキ'
