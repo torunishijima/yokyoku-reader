@@ -304,7 +304,8 @@
   "frame": 225,
   "frame_end": 231,
   "hangyo_file": "yo021.txt",
-  "hangyo_title": "鵜祭"
+  "hangyo_title": "鵜祭",
+  "yomi": "うのまつり"
  },
  {
   "title": "梅",
@@ -314,7 +315,8 @@
   "frame": 231,
   "frame_end": 237,
   "hangyo_file": "yo063.txt",
-  "hangyo_title": "梅"
+  "hangyo_title": "梅",
+  "yomi": "うめ"
  },
  {
   "title": "梅枝",
@@ -324,7 +326,8 @@
   "frame": 237,
   "frame_end": 244,
   "hangyo_file": "yo128.txt",
-  "hangyo_title": "梅枝"
+  "hangyo_title": "梅枝",
+  "yomi": "うめがえ"
  },
  {
   "title": "鱗形",
@@ -334,7 +337,8 @@
   "frame": 244,
   "frame_end": 248,
   "hangyo_file": "yo042.txt",
-  "hangyo_title": "鱗形"
+  "hangyo_title": "鱗形",
+  "yomi": "うろこがた"
  },
  {
   "title": "雲林院",
@@ -344,7 +348,8 @@
   "frame": 248,
   "frame_end": 255,
   "hangyo_file": "yo081.txt",
-  "hangyo_title": "雲林院"
+  "hangyo_title": "雲林院",
+  "yomi": "うんりんいん"
  },
  {
   "title": "江口",
@@ -354,7 +359,8 @@
   "frame": 255,
   "frame_end": 264,
   "hangyo_file": "yo073.txt",
-  "hangyo_title": "江口"
+  "hangyo_title": "江口",
+  "yomi": "えぐち"
  },
  {
   "title": "江島",
@@ -364,7 +370,8 @@
   "frame": 264,
   "frame_end": 272,
   "hangyo_file": "yo026.txt",
-  "hangyo_title": "江島"
+  "hangyo_title": "江島",
+  "yomi": "えのしま"
  },
  {
   "title": "箙",
@@ -374,7 +381,8 @@
   "frame": 272,
   "frame_end": 280,
   "hangyo_file": "yo046.txt",
-  "hangyo_title": "箙"
+  "hangyo_title": "箙",
+  "yomi": "えびら"
  },
  {
   "title": "老松",
@@ -384,7 +392,8 @@
   "frame": 280,
   "frame_end": 287,
   "hangyo_file": "yo013.txt",
-  "hangyo_title": "老松"
+  "hangyo_title": "老松",
+  "yomi": "おいまつ"
  },
  {
   "title": "大原御幸",
@@ -394,7 +403,8 @@
   "frame": 287,
   "frame_end": 296,
   "hangyo_file": "yo102.txt",
-  "hangyo_title": "大原御幸"
+  "hangyo_title": "大原御幸",
+  "yomi": "おはらごこう"
  },
  {
   "title": "大江山",
