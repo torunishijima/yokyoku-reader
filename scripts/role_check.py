@@ -25,13 +25,13 @@ def role_key(label, prev=''):
     """役名 → 区分（シテ・ツレ・ワキ・ワキツレ・地・子方・アイ・同吟）。小段名だけなら直前の区分"""
     if not label: return prev
     if '・' in label or re.search(r'二人|三人|同吟|^同', label): return '同吟'
-    if re.match(r'^(後|前)?(シテツレ|シテヅレ|ツレ|トモ)', label): return 'ツレ'
+    if re.match(r'^(後|前)?(シテツレ|シテヅレ|ツレ|トモ|龍神)', label): return 'ツレ'
     if re.match(r'^(後|前)?[シジ]テ', label): return 'シテ'
-    if re.match(r'^ワキ[ヅツ]レ', label): return 'ワキツレ'
+    if re.match(r'^(ワキ[ヅツ]レ|獨武者)', label): return 'ワキツレ'
     if re.match(r'^ワキ', label): return 'ワキ'
     if re.match(r'^子', label): return '子方'
     if re.match(r'^(地|.*地$)', label): return '地'
-    if re.match(r'^(狂言|アイ|間|強力|太刀|オモ|アド)', label): return 'アイ'
+    if re.match(r'^(狂言|アイ|間|強力|强力|太刀|オモ|アド)', label): return 'アイ'
     if re.fullmatch(SHODAN + r'.*', label): return prev
     return label
 
