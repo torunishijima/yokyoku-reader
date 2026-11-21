@@ -1046,16 +1046,8 @@
      ],
      "items": [
       {
-       "type": "u",
-       "role": "",
-       "shodan": "",
-       "paren": "",
-       "q": "",
-       "text": "前の狂言、仕手柱際へ出で、",
-       "page": 307,
-       "src": [
-        null
-       ]
+       "type": "note",
+       "text": "前の狂言、仕手柱際へ出で、"
       },
       {
        "type": "u",
