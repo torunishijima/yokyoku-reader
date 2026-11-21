@@ -414,7 +414,8 @@
   "frame": 296,
   "frame_end": 306,
   "hangyo_file": "yo232.txt",
-  "hangyo_title": "大江山"
+  "hangyo_title": "大江山",
+  "yomi": "おおえやま"
  },
  {
   "title": "大社",
@@ -424,7 +425,8 @@
   "frame": 306,
   "frame_end": 313,
   "hangyo_file": "yo018.txt",
-  "hangyo_title": "大社"
+  "hangyo_title": "大社",
+  "yomi": "おおやしろ"
  },
  {
   "title": "項羽",
@@ -434,7 +436,8 @@
   "frame": 313,
   "frame_end": 320,
   "hangyo_file": "yo207.txt",
-  "hangyo_title": "項羽"
+  "hangyo_title": "項羽",
+  "yomi": "こうう"
  },
  {
   "title": "高野物狂",
@@ -444,7 +447,8 @@
   "frame": 320,
   "frame_end": 328,
   "hangyo_file": "yo158.txt",
-  "hangyo_title": "高野物狂"
+  "hangyo_title": "高野物狂",
+  "yomi": "こうやものぐるい"
  },
  {
   "title": "杜若",
@@ -454,7 +458,8 @@
   "frame": 328,
   "frame_end": 335,
   "hangyo_file": "yo079.txt",
-  "hangyo_title": "杜若"
+  "hangyo_title": "杜若",
+  "yomi": "かきつばた"
  },
  {
   "title": "景淸",
@@ -464,7 +469,8 @@
   "frame": 335,
   "frame_end": 344,
   "hangyo_file": "yo153.txt",
-  "hangyo_title": "景清"
+  "hangyo_title": "景清",
+  "yomi": "かげきよ"
  },
  {
   "title": "柏崎",
@@ -474,7 +480,8 @@
   "frame": 344,
   "frame_end": 353,
   "hangyo_file": "yo109.txt",
-  "hangyo_title": "柏崎"
+  "hangyo_title": "柏崎",
+  "yomi": "かしわざき"
  },
  {
   "title": "春日龍神",
@@ -484,7 +491,8 @@
   "frame": 353,
   "frame_end": 360,
   "hangyo_file": "yo227.txt",
-  "hangyo_title": "春日龍神"
+  "hangyo_title": "春日龍神",
+  "yomi": "かすがりゅうじん"
  },
  {
   "title": "合浦",
@@ -494,7 +502,8 @@
   "frame": 360,
   "frame_end": 364,
   "hangyo_file": "yo251.txt",
-  "hangyo_title": "合甫"
+  "hangyo_title": "合甫",
+  "yomi": "かっぽ"
  },
  {
   "title": "葛城",
@@ -504,7 +513,8 @@
   "frame": 364,
   "frame_end": 371,
   "hangyo_file": "yo087.txt",
-  "hangyo_title": "葛城"
+  "hangyo_title": "葛城",
+  "yomi": "かずらき"
  },
  {
   "title": "鐵輪",

@@ -37,13 +37,15 @@ AI_MARK = {'間', '問'}   # 【間】（間狂言）。「問」は読み誤り
 # ---------- 役名 ----------
 ROLES = ['後ジテ', '前ジテ', '後シテ', '前シテ', 'シテツレ', 'シテヅレ', 'ワキヅレ', 'ワキツレ', 'シテ', 'ツレ', 'ワキ', 'トモ', '子方', '子',
          '地', '狂言', 'アイ', '同', '二人', '三人', '立衆', '女', '男',
-         '強力', '太刀持', '太刀', 'オモ', 'アド', '千歳', '翁', '三番叟', '三番']
+         '強力', '强力', '太刀持', '太刀', 'オモ', 'アド', 'アト', '千歳', '翁', '三番叟', '三番',
+         'ワキヅレ一同', '獨武者', '後ヅレ', '龍神', '神主', '參詣人', '巫子']
 SHODAN = ['次第', '名ノリ', '名宣', '道行', '一聲', '一セイ', '二句', 'サシ', '下歌', '上歌', 'クリ', 'クセ', 'ロンギ', '待謠', '詞',
           '歌', 'ワカ', 'ノリ地', 'キリ', '掛合', '中ノリ', '大ノリ', '問答', '上', '下', 'カカル', '一']
 # OCR のよくある読み誤り。ここで直した役名も、役名の照合（role_check.py）で半魚文庫と食い違えば画像で確かめる
 ROLE_MISREAD = {'ッキ': 'ワキ', 'ット': 'ワキ', 'ッレ': 'ツレ', 'シァ': 'シテ', 'ジテ': 'シテ', 'び': 'シテ', '邦': '地',
                 'ヮキ': 'ワキ', 'ンテ': 'シテ', 'シア': 'シテ', 'ワキヅル': 'ワキヅレ', 'ッキヅレ': 'ワキヅレ',
-                'サン': 'サシ', '土歌': '上歌', 'ウキ': 'ワキ', '〃七': 'クセ', '〃セ': 'クセ', 'ク七': 'クセ', '"七': 'クセ', 'クヤ': 'クセ'}
+                'サン': 'サシ', '土歌': '上歌', 'ウキ': 'ワキ', '〃七': 'クセ', '〃セ': 'クセ', 'ク七': 'クセ', '"七': 'クセ', 'クヤ': 'クセ',
+                '龍\ufa19': '龍神'}   # 互換漢字の神（U+FA19）
 ROLE_RE = '|'.join(sorted(set(ROLES) | {k for k, v in ROLE_MISREAD.items() if v in ROLES}, key=len, reverse=True))
 SHODAN_RE = '|'.join(sorted(set(SHODAN) | {k for k, v in ROLE_MISREAD.items() if v in SHODAN}, key=len, reverse=True))
 LABEL = re.compile(rf'^((?:(?:{ROLE_RE})(?:・?(?:{ROLE_RE}))*)?)((?:{SHODAN_RE})?)(\([^)）]*[)）])?([「『』])')
@@ -335,8 +337,9 @@ def parse_honbun(lines, log, state, in_ai=False):
 # ---------- 間狂言 ----------
 # 間狂言は本文・通釈の段をまたぐ長い行で組まれていて、曲ごとの切り出し（split_taikan.py）では散文として除かれている。
 # 中入（または【間】の印）から次の段の印までの範囲を、元の OCR からまとめて取り出す。半魚文庫に対応がないので照合はしていない。
-def extract_ai(pid, start, end, last_page, log):
-    """start/end: (頁, x)。end が None なら曲の終わりまで。発言の並びを返す"""
+def extract_ai(pid, start, end, last_page, log, fixes=None):
+    """start/end: (頁, x)。end が None なら曲の終わりまで。発言の並びを返す。
+    fixes: 本文・通釈に当たらなかった訂正記録（間狂言は OCR の生の行から組むので、ここで当てる）"""
     pages = []
     for pg in range(start[0], (end[0] if end else last_page) + 1):
         ls, allt = [], []
@@ -363,20 +366,29 @@ def extract_ai(pid, start, end, last_page, log):
             js = [j for j, l in enumerate(p['lines'][:5]) if any(same(l['t'], t) for t in tail)]
             if js: del p['lines'][:js[-1] + 1]
     pages = [p for p in pages if not p.get('dummy')]
+    # 本文・通釈に当たらなかった訂正と、備考が「間狂言」で始まる訂正（切り出しにも同じ行があって先に当たる場合）
+    if fixes: apply_fixes(pages, [f for f in fixes if not f.get('applied') or f['note'].startswith('間狂言')], log)
     lines = []
     for p in pages:
         tops = sorted(l['top'] for l in p['lines'])
         body = tops[len(tops) // 4] if tops else 0
         for l in p['lines']:
             t = l['t']
+            if not t: continue   # 訂正記録で削除した行
             m = DAN_LINE.match(t)
             if m:
                 t = clean(m[3] or '')
                 if not t: continue
             lm = LABEL.match(t)
-            kind = 'note' if l['top'] > body + 0.02 and not (lm and (lm[1] or lm[2])) else 'text'
+            kind = 'note' if l.get('force') == 'note' or (l['top'] > body + 0.02 and not (lm and (lm[1] or lm[2]))) else 'text'
             lines.append((p['page'], dict(t=t, kind=kind, x=l['x'])))
-    return parse_honbun(lines, log, {}, in_ai=True) if lines else []
+    items = parse_honbun(lines, log, {}, in_ai=True) if lines else []
+    # 間狂言の最初の行（狂言の出の装束など）は役名も鉤括弧もなく、発言として組まれる。ト書きに直す
+    if items and items[0]['type'] == 'u' and not items[0]['role'] and not items[0]['q'] and not items[0]['shodan']:
+        first = dict(type='note', text=items[0]['text'])
+        if len(items) > 1 and items[1]['type'] == 'note': first['text'] += items.pop(1)['text']
+        items[0] = first
+    return items
 
 # ---------- 通釈 ----------
 SCENE = re.compile(r'(?:前段|後段|第[一二三四五]段)')
@@ -477,17 +489,22 @@ def apply_info_fixes(x, info, fixes, log):
 def apply_item_patches(title, dan, log, warn):
     """work/fixes/<曲>.items.json の差し替えを、組み立てた段に当てる。
     OCR が行ごと読み落とした・崩れた所など、字の訂正（tsv）では直せないものに使う。
-    [{"page": 頁, "dan": 段の番号, "band": "honbun"|"tsushaku", "find": その発言にある文字列（1 か所だけ）,
+    [{"page": 頁, "dan": 段の番号, "band": "honbun"|"tsushaku"|"ai"（間狂言。dan は不要）, "find": その発言にある文字列（1 か所だけ）,
       "set": {置き換える欄}, "item": {発言ごと置き換え}, "delete": true（読み取りの崩れだけの行を除く）,
       "after": [後ろに足す発言], "note": 理由}]"""
     f = FIX / f'{title}.items.json'
     if not f.exists(): return
     for p in json.loads(f.read_text(encoding='utf-8')):
-        d = next((x for x in dan if x['no'] == p['dan']), None)
-        items = d[p['band']] if d else []
-        hits = [i for i, it in enumerate(items) if p['find'] in it.get('text', '')]
+        if p['band'] == 'ai':   # 間狂言の発言（どの段の中にあっても探す）
+            blocks = [it['items'] for x in dan for it in x['honbun'] if it['type'] == 'ai' and it.get('items')]
+            found = [(b, i) for b in blocks for i, it in enumerate(b) if p['find'] in it.get('text', '')]
+            items, hits = (found[0][0], [found[0][1]]) if len(found) == 1 else ([], [None] * len(found))
+        else:
+            d = next((x for x in dan if x['no'] == p['dan']), None)
+            items = d[p['band']] if d else []
+            hits = [i for i, it in enumerate(items) if p['find'] in it.get('text', '')]
         if len(hits) != 1:
-            warn.append(f"差し替えを当てられなかった: 【{p['dan']}】{p['band']} {p['find']}（{len(hits)} か所）"); continue
+            warn.append(f"差し替えを当てられなかった: 【{p.get('dan', '間')}】{p['band']} {p['find']}（{len(hits)} か所）"); continue
         i = hits[0]
         if 'item' in p: items[i] = dict(p['item'])
         items[i].update(p.get('set', {}))
@@ -548,7 +565,7 @@ def build(title):
             hon = parse_honbun(d['lines'], log, state)
         if hon and hon[-1]['type'] == 'ai' and not (i + 1 < len(bounds) and bounds[i + 1]['ai']):   # 次が【間】の段ならそちらでまとめる
             ai = hon[-1]
-            ai['items'] = extract_ai(x['pid'], tuple(ai['start']), nxt, last_page, log)
+            ai['items'] = extract_ai(x['pid'], tuple(ai['start']), nxt, last_page, log, fixes)
             ai['pages'] = [ai['start'][0], nxt[0] if nxt else last_page]
             if not ai['items']:
                 # 中入の後に散文（間狂言の組み方）が一行もなければ、間狂言のない中入（藍染川の入水など）
