@@ -38,7 +38,8 @@ AI_MARK = {'間', '問'}   # 【間】（間狂言）。「問」は読み誤り
 ROLES = ['後ジテ', '前ジテ', '後シテ', '前シテ', 'シテツレ', 'シテヅレ', 'ワキヅレ', 'ワキツレ', 'シテ', 'ツレ', 'ワキ', 'トモ', '子方', '子',
          '地', '狂言', 'アイ', '同', '二人', '三人', '立衆', '女', '男',
          '強力', '强力', '太刀持', '太刀', 'オモ', 'アド', 'アト', '千歳', '翁', '三番叟', '三番',
-         'ワキヅレ一同', '獨武者', '後ヅレ', '龍神', '神主', '參詣人', '巫子']
+         'ワキヅレ一同', '獨武者', '後ヅレ', '龍神', '神主', '參詣人', '巫子', '女御', 'ツレ一同',
+         '一同', '義仲', '池田', '從兵', '舞陽', '大臣', '夫人']
 SHODAN = ['次第', '名ノリ', '名宣', '道行', '一聲', '一セイ', '二句', 'サシ', '下歌', '上歌', 'クリ', 'クセ', 'ロンギ', '待謠', '詞',
           '歌', 'ワカ', 'ノリ地', 'キリ', '掛合', '中ノリ', '大ノリ', '問答', '上', '下', 'カカル', '一']
 # OCR のよくある読み誤り。ここで直した役名も、役名の照合（role_check.py）で半魚文庫と食い違えば画像で確かめる
@@ -116,19 +117,34 @@ def similar(a, b):
     if min(len(a), len(b)) / max(len(a), len(b)) < 0.6: return False
     return difflib.SequenceMatcher(None, a, b).ratio() >= 0.7
 
+def same_spot(l, r):
+    """左頁の行 l と右頁の行 r が、見開きの同じ位置か（左右は見開きの 0〜52% と 48〜100% で切っている）"""
+    wl = l['box'][2] / l['x'] if l['x'] else 0
+    return not wl or abs(l['box'][2] - r['box'][2] - wl * 0.48 / 0.52) < wl * 0.03
+
+def differ_role(a, b):
+    """2 行が別の役の詞か（同じ句のくり返し）。読み崩れた行（〔?〕）や、役名の読み誤り（ンテ／シテ）は同じ役とみなす"""
+    if '〔?〕' in a or '〔?〕' in b: return False
+    ma, mb = LABEL.match(clean(a)), LABEL.match(clean(b))
+    if not (ma and mb and ma[1] and mb[1]): return False
+    return ROLE_MISREAD.get(ma[1], ma[1]) != ROLE_MISREAD.get(mb[1], mb[1])
+
 def dedupe(pages, log):
     """見開きの継ぎ目（右頁の終わりと左頁の始め）で二重に出た行と、続けて同じ行が出たものを除く"""
     for i, p in enumerate(pages):
         if i and p['img'].endswith('L') and pages[i - 1]['img'] == p['img'][:4] + 'R':
-            tail = [clean(l['t']) for l in pages[i - 1]['lines'][-5:]]
+            # 同じ行は、見開きの同じ位置に印刷された 1 行。左右の画像の切り始めの差（見開きの幅の 48%）だけずれた位置にある。
+            # 位置が合わない似た行は除かない（邯鄲 p787）。訂正で消した行（空）は相手にしない（空どうしが同じとみなされる。咸陽宮 p797・通小町 p769）
+            tail = [l for l in pages[i - 1]['lines'][-5:] if clean(l['t'])]
+            js = [j for j, l in enumerate(p['lines'][:5]) if clean(l['t']) and any(similar(l['t'], r['t']) and same_spot(l, r) for r in tail)]
             # 先頭 5 行のうち、右頁の終わりと同じ行があれば、そこまで（読み崩れた行も含めて）除く
-            js = [j for j, l in enumerate(p['lines'][:5]) if any(similar(l['t'], t) for t in tail)]
             for l in p['lines'][:js[-1] + 1] if js else []:
                 log.append(dict(page=p['page'], kind='重複', ocr=l['t']))
             if js: del p['lines'][:js[-1] + 1]
         keep = []
         for l in p['lines']:
-            if keep and clean(keep[-1]['t']) and similar(keep[-1]['t'], l['t']) and len(clean(l['t'])) >= 6:
+            if keep and clean(keep[-1]['t']) and similar(keep[-1]['t'], l['t']) and len(clean(l['t'])) >= 6 \
+                    and not differ_role(keep[-1]['t'], l['t']):   # 役が違えば同じ句のくり返し（ツレ『…／地『…。通小町 p765）
                 # 続けて同じ行: 訂正済みのほう（＊なし・〔?〕なしのほう）を残す
                 log.append(dict(page=p['page'], kind='重複', ocr=l['t'])); continue
             keep.append(l)
@@ -156,13 +172,15 @@ def classify(pages):
                 l['kind'] = 'dan'
             elif y1 - y0 < 160 and y0 < body + 60 and re.fullmatch(rf'(?:{ROLE_RE}|ワキヅ|シテツ)(?:・(?:{ROLE_RE}|ワキヅ))*・?', t):
                 l['kind'] = 'role'
-            elif y0 > body + 80 and not ((m := LABEL.match(t)) and m[2]):
+            # 一段下がった行はト書き。ただし小段名付きの行と、訂正で役名を補った詞の行（小字の役名を読み落とした行。江島 p498）は本文
+            elif y0 > body + 80 and not ((m := LABEL.match(t)) and (m[2] or (l.get('fixed') and m[1]))):
                 l['kind'] = 'note'
             else:
                 l['kind'] = 'text'
                 # 段の印の直後に役名なしで始まる行は、冒頭のト書き（一行目だけ本文の高さから組まれる）
                 if prev_kind == 'dan' and not ((m := LABEL.match(t)) and (m[1] or m[2])): l['kind'] = 'note'
-            if l['kind'] != 'junk': prev_kind = l['kind']
+            if l['kind'] != 'junk':   # 段の印に本文がつながった行（訂正で補った印など）の次は、ト書きとみなさない
+                prev_kind = 'text' if l['kind'] == 'dan' and clean(DAN_LINE.match(l['t'])[3] or '') else l['kind']
             l['t'] = t
 
 # ---------- 段に分ける ----------
@@ -390,6 +408,16 @@ def extract_ai(pid, start, end, last_page, log, fixes=None):
         items[0] = first
     return items
 
+def find_jo(x, bounds):
+    """【序】の印の位置 (頁, x)。曲の最初の頁から【一】の頁までの本文の高さで探す（頭注の欄の【序】は除く）"""
+    if not bounds: return None
+    last = bounds[0]['page']
+    for pg in range(x['page'], last + 1):
+        for l in sorted(raw_lines(x['pid'], pg), key=lambda l: -l['x']):
+            if l['band'] in ('honbun', 'prose') and re.match(r'^＊?[【\[〔]序[】\]〕]', l['t']):
+                return (pg, l['x'])
+    return None
+
 # ---------- 通釈 ----------
 SCENE = re.compile(r'(?:前段|後段|第[一二三四五]段)')
 def is_scene(t): return bool(SCENE.fullmatch(t))   # 通釈の場面の見出し（夢幻能は前段・後段、劇能は第一段・第二段…）
@@ -455,6 +483,8 @@ def read_info(x):
     if m: info['流派'] = m[1]
     # 読み誤った印をそろえる（「時〕」→【時】、「者】」「[者】」→【作者】）
     txt = re.sub(r'[【\[〔]?時[〕\]】]', '【時】', txt)
+    txt = re.sub(r'[【\[〔]所[〕\]】]', '【所】', txt)   # 〔所〕（鐵輪）
+    txt = re.sub(r'^能柄】', '【能柄】', txt, flags=re.M)   # 開きの括弧の読み落とし（鐵輪）
     txt = re.sub(r'(?:【作|[\[〔(]|作)?者】', '【作者】', txt)
     txt = re.sub(r'[『【\[〔(]梗[槪概][〕】\])]', '【梗概】', txt)
     # 梗概の 1 行目が見出しより前に読まれることがある（船辨慶・大蛇）。文の途中で切れた行が見出しの直前にあれば梗概の頭へ戻す
@@ -580,6 +610,12 @@ def build(title):
         d['tsushaku'] = [t for j, t in enumerate(ts_) if not (t['type'] == 'heading' and j and ts_[j - 1] == t)]
         while i + 1 < len(dan) and d['tsushaku'] and d['tsushaku'][-1]['type'] == 'heading':
             dan[i + 1]['tsushaku'].insert(0, d['tsushaku'].pop())
+    # 【序】（【一】の前に組まれた、作物を出す・狂言の名ノリなど）。解説の頁の下に間狂言と同じ組み方で印刷されている
+    jo = find_jo(x, bounds)
+    if jo and dan and bounds:
+        end = hpos(bounds[0])
+        items = extract_ai(x['pid'], (jo[0], jo[1] + 0.004), end, last_page, log, fixes)
+        if items: dan[0]['honbun'].insert(0, dict(type='ai', label='序', start=list(jo), pages=[jo[0], end[0]], items=items))
     apply_item_patches(title, dan, log, warn)
     for d in dan:   # 段の本文と通釈の分量が極端に違うときは、段の区切りがずれている疑い
         h = sum(len(it.get('text', '')) for it in d['honbun'] if it['type'] == 'u')
