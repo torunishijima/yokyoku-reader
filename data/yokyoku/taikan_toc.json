@@ -524,7 +524,8 @@
   "frame": 371,
   "frame_end": 377,
   "hangyo_file": "yo147.txt",
-  "hangyo_title": "鉄輪"
+  "hangyo_title": "鉄輪",
+  "yomi": "かなわ"
  },
  {
   "title": "兼平",
@@ -534,7 +535,8 @@
   "frame": 377,
   "frame_end": 390,
   "hangyo_file": "yo051.txt",
-  "hangyo_title": "兼平"
+  "hangyo_title": "兼平",
+  "yomi": "かねひら"
  },
  {
   "title": "賀茂",
@@ -544,7 +546,8 @@
   "frame": 15,
   "frame_end": 23,
   "hangyo_file": "yo027.txt",
-  "hangyo_title": "賀茂"
+  "hangyo_title": "賀茂",
+  "yomi": "かも"
  },
  {
   "title": "賀茂物狂",
@@ -554,7 +557,8 @@
   "frame": 23,
   "frame_end": 30,
   "hangyo_file": "yo122.txt",
-  "hangyo_title": "賀茂物狂"
+  "hangyo_title": "賀茂物狂",
+  "yomi": "かもものぐるい"
  },
  {
   "title": "通小町",
@@ -564,7 +568,8 @@
   "frame": 30,
   "frame_end": 37,
   "hangyo_file": "yo137.txt",
-  "hangyo_title": "通小町"
+  "hangyo_title": "通小町",
+  "yomi": "かよいこまち"
  },
  {
   "title": "邯鄲",
@@ -574,7 +579,8 @@
   "frame": 37,
   "frame_end": 45,
   "hangyo_file": "yo183.txt",
-  "hangyo_title": "邯鄲"
+  "hangyo_title": "邯鄲",
+  "yomi": "かんたん"
  },
  {
   "title": "咸陽宮",
@@ -584,7 +590,8 @@
   "frame": 45,
   "frame_end": 52,
   "hangyo_file": "yo187.txt",
-  "hangyo_title": "咸陽宮"
+  "hangyo_title": "咸陽宮",
+  "yomi": "かんようきゅう"
  },
  {
   "title": "菊慈童",
@@ -594,7 +601,8 @@
   "frame": 52,
   "frame_end": 57,
   "hangyo_file": "yo184.txt",
-  "hangyo_title": "菊慈童"
+  "hangyo_title": "菊慈童",
+  "yomi": "きくじどう"
  },
  {
   "title": "木曾",
@@ -604,7 +612,8 @@
   "frame": 57,
   "frame_end": 62,
   "hangyo_file": "yo168.txt",
-  "hangyo_title": "木曽"
+  "hangyo_title": "木曽",
+  "yomi": "きそ"
  },
  {
   "title": "砧",
@@ -614,7 +623,8 @@
   "frame": 62,
   "frame_end": 70,
   "hangyo_file": "yo133.txt",
-  "hangyo_title": "砧"
+  "hangyo_title": "砧",
+  "yomi": "きぬた"
  },
  {
   "title": "淸經",
